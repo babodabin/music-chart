@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>마이 뮤직</title>
+<meta name="theme-color" content="#0a0a0a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="마이뮤직">
+<style>
+  :root{
+    --bg:#0a0a0a; --bg2:#161616; --bg3:#222; --line:#2a2a2a;
+    --txt:#f2f2f2; --dim:#9a9a9a; --dim2:#6a6a6a;
+    --red:#ff0033; --reddim:#cc0029;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;overflow:hidden;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    background:var(--bg);color:var(--txt);display:flex;flex-direction:column;height:100dvh;
+    user-select:none;-webkit-user-select:none;}
+
+  /* 헤더 */
+  #header{flex:0 0 auto;padding:calc(env(safe-area-inset-top) + 12px) 16px 10px;
+    display:flex;align-items:center;justify-content:space-between;background:var(--bg);}
+  #header h1{font-size:22px;font-weight:800;letter-spacing:-.5px;}
+  #header h1 span{color:var(--red);}
+  #headBtns{display:flex;gap:6px;}
+  .iconBtn{width:38px;height:38px;border:none;background:var(--bg2);border-radius:50%;
+    color:var(--txt);font-size:17px;display:flex;align-items:center;justify-content:center;}
+  .iconBtn:active{background:var(--bg3);}
+
+  /* 본문 스크롤 */
+  #scroll{flex:1 1 auto;overflow-y:auto;padding:0 0 calc(env(safe-area-inset-bottom) + 20px);}
+
+  /* 섹션 */
+  .section{margin-top:18px;}
+  .secHead{display:flex;align-items:center;justify-content:space-between;padding:0 16px 10px;}
+  .secHead .stitle{font-size:18px;font-weight:700;}
+  .secHead .saction{font-size:12px;color:var(--dim);background:none;border:none;}
+  .secHead .saction:active{color:var(--txt);}
+
+  /* 차트(순위) — 세로 리스트, 1위는 큼 */
+  .chartTop{margin:0 16px 12px;border-radius:16px;overflow:hidden;position:relative;
+    background:var(--bg2);display:flex;flex-direction:column;}
+  .chartTop .ctImg{width:100%;aspect-ratio:16/9;object-fit:cover;background:var(--bg3);}
+  .chartTop .ctInfo{padding:12px 14px;}
+  .chartTop .ctRank{display:inline-block;background:var(--red);color:#fff;font-size:12px;
+    font-weight:800;padding:3px 9px;border-radius:6px;margin-bottom:7px;}
+  .chartTop .ctTitle{font-size:16px;font-weight:700;line-height:1.3;margin-bottom:3px;}
+  .chartTop .ctArtist{font-size:13px;color:var(--dim);}
+
+  .rankRow{display:flex;align-items:center;gap:12px;padding:8px 16px;}
+  .rankRow:active{background:var(--bg2);}
+  .rankNum{flex:0 0 24px;text-align:center;font-size:16px;font-weight:700;color:var(--dim);}
+  .rankNum.top{color:var(--red);}
+  .rankThumb{flex:0 0 52px;width:52px;height:52px;border-radius:8px;object-fit:cover;background:var(--bg3);}
+  .rankInfo{flex:1;min-width:0;}
+  .rankTitle{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .rankArtist{font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+  .rankPlay{flex:0 0 auto;width:32px;height:32px;border:none;background:none;color:var(--dim);font-size:18px;}
+  .rankPlay:active{color:var(--red);}
+
+  /* 재생목록 카드 (가로 스크롤) */
+  .plScroll{display:flex;gap:12px;overflow-x:auto;padding:0 16px 4px;scroll-snap-type:x proximity;}
+  .plScroll::-webkit-scrollbar{display:none;}
+  .plCard{flex:0 0 auto;width:150px;scroll-snap-align:start;}
+  .plCard .pcImg{width:150px;height:150px;border-radius:12px;object-fit:cover;background:var(--bg3);
+    display:flex;align-items:center;justify-content:center;font-size:40px;}
+  .plCard .pcTitle{font-size:13px;font-weight:600;margin-top:8px;line-height:1.3;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .plCard .pcSub{font-size:11px;color:var(--dim);margin-top:2px;}
+
+  /* 로딩/에러 */
+  .secLoading{padding:20px 16px;color:var(--dim);font-size:13px;text-align:center;}
+  .secError{margin:0 16px;padding:14px;background:var(--bg2);border-radius:12px;
+    color:var(--dim);font-size:13px;line-height:1.6;text-align:center;}
+  .secError b{color:var(--red);}
+
+  /* 곡 목록 모달 (재생목록 누르면) */
+  #plModal{position:fixed;inset:0;z-index:40;background:var(--bg);display:none;flex-direction:column;
+    padding-top:env(safe-area-inset-top);}
+  #plModal.show{display:flex;}
+  #plModalHead{flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);}
+  #plModalHead button{border:none;background:none;color:var(--txt);font-size:22px;}
+  #plModalHead .pmTitle{flex:1;font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #plModalHead .pmOpen{font-size:12px;color:var(--red);background:none;font-weight:600;}
+  #plModalList{flex:1;overflow-y:auto;padding:6px 0 calc(env(safe-area-inset-bottom) + 16px);}
+
+  /* 설정 모달 */
+  #setModal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.94);display:none;
+    flex-direction:column;padding:env(safe-area-inset-top) 0 0;}
+  #setModal.show{display:flex;}
+  #setHead{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);}
+  #setHead h2{font-size:18px;font-weight:700;}
+  #setHead button{border:none;background:none;color:var(--txt);font-size:24px;}
+  #setBody{flex:1;overflow-y:auto;padding:16px;}
+  .setLabel{font-size:13px;color:var(--dim);margin:14px 0 6px;}
+  .setLabel:first-child{margin-top:0;}
+  .setInput{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:10px;
+    color:var(--txt);font-size:14px;padding:11px 13px;outline:none;}
+  .setInput:focus{border-color:var(--red);}
+  .setHelp{font-size:11px;color:var(--dim2);margin-top:6px;line-height:1.6;}
+  .setHelp a{color:var(--dim);}
+  .setBtn{width:100%;background:var(--red);border:none;border-radius:10px;color:#fff;
+    font-size:15px;font-weight:700;padding:13px 0;margin-top:18px;}
+  .setBtn:active{background:var(--reddim);}
+  .setBtn.sec{background:var(--bg2);color:var(--txt);margin-top:10px;}
+
+  /* 재생목록 추가 입력 */
+  .plAddRow{display:flex;gap:8px;margin-top:8px;}
+  .plAddRow .setInput{flex:1;}
+  .plAddRow button{flex:0 0 auto;background:var(--bg3);border:none;border-radius:10px;color:var(--txt);
+    font-size:13px;font-weight:600;padding:0 14px;}
+  .savedPl{display:flex;align-items:center;gap:10px;background:var(--bg2);border-radius:10px;
+    padding:10px 12px;margin-top:8px;}
+  .savedPl .spName{flex:1;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .savedPl .spDel{border:none;background:none;color:var(--dim);font-size:18px;}
+
+  #toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 24px);transform:translateX(-50%) translateY(20px);
+    background:var(--bg3);border:1px solid var(--line);color:var(--txt);font-size:13px;font-weight:500;
+    padding:10px 18px;border-radius:20px;opacity:0;transition:all .25s;z-index:60;pointer-events:none;white-space:nowrap;max-width:90vw;}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+  <div id="header">
+    <h1>마이 <span>뮤직</span></h1>
+    <div id="headBtns">
+      <button class="iconBtn" id="refreshBtn" title="새로고침">⟳</button>
+      <button class="iconBtn" id="setBtn" title="설정">⚙</button>
+    </div>
+  </div>
+
+  <div id="scroll">
+    <!-- 순위 -->
+    <div class="section" id="chartSection">
+      <div class="secHead"><span class="stitle">🔥 인기 순위</span><button class="saction" id="chartRegion">한국 ▾</button></div>
+      <div id="chartBody"><div class="secLoading">불러오는 중…</div></div>
+    </div>
+
+    <!-- 내 재생목록 -->
+    <div class="section" id="mySection">
+      <div class="secHead"><span class="stitle">⭐ 내 재생목록</span><button class="saction" id="addMyBtn">+ 추가</button></div>
+      <div id="myBody"><div class="secLoading">불러오는 중…</div></div>
+    </div>
+
+    <!-- 공식 재생목록 -->
+    <div class="section" id="officialSection">
+      <div class="secHead"><span class="stitle">🎵 추천 재생목록</span><button class="saction" id="addOffBtn">+ 추가</button></div>
+      <div id="officialBody"><div class="secLoading">불러오는 중…</div></div>
+    </div>
+  </div>
+
+  <!-- 곡 목록 모달 -->
+  <div id="plModal">
+    <div id="plModalHead">
+      <button id="plModalClose">‹</button>
+      <span class="pmTitle" id="pmTitle">재생목록</span>
+      <button class="pmOpen" id="pmOpen">앱에서 열기</button>
+    </div>
+    <div id="plModalList"></div>
+  </div>
+
+  <!-- 설정 모달 -->
+  <div id="setModal">
+    <div id="setHead"><h2>설정</h2><button id="setClose">×</button></div>
+    <div id="setBody">
+      <div class="setLabel">YouTube API 키</div>
+      <input class="setInput" id="apiKeyInput" type="text" placeholder="여기에 API 키 붙여넣기" autocomplete="off" autocorrect="off" autocapitalize="off">
+      <div class="setHelp">구글 클라우드에서 발급받은 키예요. 한 번 넣으면 이 폰에 저장됩니다. 키는 외부로 전송되지 않아요.</div>
+      <button class="setBtn" id="saveKeyBtn">저장</button>
+
+      <div class="setLabel" style="margin-top:24px;">⭐ 내 재생목록 관리</div>
+      <div class="plAddRow"><input class="setInput" id="myPlInput" type="text" placeholder="재생목록 링크 붙여넣기" autocomplete="off"><button id="myPlAdd">추가</button></div>
+      <div id="myPlList"></div>
+
+      <div class="setLabel" style="margin-top:24px;">🎵 추천 재생목록 관리</div>
+      <div class="plAddRow"><input class="setInput" id="offPlInput" type="text" placeholder="재생목록 링크 붙여넣기" autocomplete="off"><button id="offPlAdd">추가</button></div>
+      <div id="offPlList"></div>
+
+      <button class="setBtn sec" id="reloadBtn" style="margin-top:24px;">변경사항 적용 (새로고침)</button>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+<script>
+/* ================================================================
+   마이 뮤직 — 유튜브뮤직 깔끔 런처
+   순위(인기 음악) + 내 재생목록 + 추천 재생목록
+   누르면 곡 목록 → 유튜브뮤직으로 점프. API 키는 폰에 저장.
+   ================================================================ */
+const $=id=>document.getElementById(id);
+
+/* ---- 저장소 (localStorage 대신 메모리+간이 영속) ----
+   아티팩트 미리보기에선 localStorage가 막혀서, window.name에 저장(앱/사파리에선 정상 작동) ---- */
+const Store={
+  data:{},
+  load(){
+    try{ this.data=JSON.parse(window.name||'{}'); }catch(e){ this.data={}; }
+    if(!this.data || typeof this.data!=='object') this.data={};
+  },
+  save(){ try{ window.name=JSON.stringify(this.data); }catch(e){} },
+  get(k,def){ return (k in this.data)?this.data[k]:def; },
+  set(k,v){ this.data[k]=v; this.save(); }
+};
+Store.load();
+
+/* ---- 기본 재생목록 (형이 준 링크) ---- */
+const DEFAULT_MY=[
+  {url:'https://music.youtube.com/playlist?list=PLzEyMy1AnSInmHSmfojyFQ8uL9qx7G5lY'},
+];
+const DEFAULT_OFFICIAL=[
+  {url:'https://youtube.com/playlist?list=RDCLAK5uy_l7wbVbkC-dG5fyEQQsBfjm_z3dLAhYyvo'},
+  {url:'https://youtube.com/playlist?list=RDCLAK5uy_nMqMWmqwZwDvMcqcAohgO_Dp_7zT1nSC8'},
+];
+
+/* ---- 상태 초기화 ---- */
+function getApiKey(){ return Store.get('apiKey',''); }
+function getMyPls(){ return Store.get('myPls', DEFAULT_MY); }
+function getOffPls(){ return Store.get('offPls', DEFAULT_OFFICIAL); }
+function getRegion(){ return Store.get('region','KR'); }
+
+/* ---- 재생목록 ID 추출 ---- */
+function extractPlaylistId(url){
+  const m=String(url).match(/[?&]list=([^&]+)/);
+  return m?m[1]:null;
+}
+/* ---- 영상 ID 추출 ---- */
+function videoId(url){
+  const m=String(url).match(/[?&]v=([^&]+)/)||String(url).match(/youtu\.be\/([^?&]+)/);
+  return m?m[1]:null;
+}
+
+/* ---- YouTube API 호출 ---- */
+const API='https://www.googleapis.com/youtube/v3/';
+async function ytFetch(endpoint, params){
+  const key=getApiKey();
+  if(!key) throw {noKey:true};
+  const url=API+endpoint+'?'+new URLSearchParams({...params, key}).toString();
+  const res=await fetch(url);
+  const data=await res.json();
+  if(data.error){ throw {api:data.error}; }
+  return data;
+}
+
+/* ---- 차트(인기 음악) 로드 ---- */
+async function loadChart(){
+  const body=$('chartBody');
+  try{
+    // 인기 음악: videoCategoryId=10 (음악)
+    const data=await ytFetch('videos',{
+      part:'snippet', chart:'mostPopular', videoCategoryId:'10',
+      regionCode:getRegion(), maxResults:'20'
+    });
+    const items=data.items||[];
+    if(items.length===0){ body.innerHTML='<div class="secError">인기 음악을 찾지 못했어요.</div>'; return; }
+    let html='';
+    items.forEach((it,i)=>{
+      const sn=it.snippet, vid=it.id;
+      const thumb=(sn.thumbnails.medium||sn.thumbnails.default).url;
+      const title=cleanTitle(sn.title);
+      const artist=sn.videoOwnerChannelTitle||sn.channelTitle||'';
+      if(i===0){
+        const big=(sn.thumbnails.maxres||sn.thumbnails.high||sn.thumbnails.medium).url;
+        html+=`<div class="chartTop" data-vid="${vid}"><img class="ctImg" src="${big}" loading="lazy"><div class="ctInfo"><span class="ctRank">1위</span><div class="ctTitle">${esc(title)}</div><div class="ctArtist">${esc(artist)}</div></div></div>`;
+      } else {
+        html+=`<div class="rankRow" data-vid="${vid}"><div class="rankNum">${i+1}</div><img class="rankThumb" src="${thumb}" loading="lazy"><div class="rankInfo"><div class="rankTitle">${esc(title)}</div><div class="rankArtist">${esc(artist)}</div></div><button class="rankPlay">▶</button></div>`;
+      }
+    });
+    body.innerHTML=html;
+  }catch(err){ body.innerHTML=errorHtml(err); }
+}
+
+/* ---- 재생목록 카드 로드 (제목/썸네일/곡수) ---- */
+async function loadPlaylistCards(pls, bodyEl, kind){
+  if(!pls || pls.length===0){ bodyEl.innerHTML=`<div class="secError">아직 재생목록이 없어요. <b>+ 추가</b>로 넣어보세요.</div>`; return; }
+  try{
+    const ids=pls.map(p=>extractPlaylistId(p.url)).filter(Boolean);
+    if(ids.length===0){ bodyEl.innerHTML='<div class="secError">재생목록 링크를 인식하지 못했어요.</div>'; return; }
+    const data=await ytFetch('playlists',{ part:'snippet,contentDetails', id:ids.join(','), maxResults:'50' });
+    const items=data.items||[];
+    let html='<div class="plScroll">';
+    items.forEach(it=>{
+      const sn=it.snippet;
+      const thumb=(sn.thumbnails.medium||sn.thumbnails.default||{}).url||'';
+      const count=it.contentDetails?it.contentDetails.itemCount:'';
+      html+=`<div class="plCard" data-plid="${it.id}" data-title="${esc(sn.title)}"><img class="pcImg" src="${thumb}" loading="lazy"><div class="pcTitle">${esc(sn.title)}</div><div class="pcSub">${count}곡</div></div>`;
+    });
+    html+='</div>';
+    bodyEl.innerHTML=html;
+  }catch(err){ bodyEl.innerHTML=errorHtml(err); }
+}
+
+/* ---- 재생목록 안의 곡 목록 (모달) ---- */
+async function openPlaylist(plid, title){
+  $('pmTitle').textContent=title||'재생목록';
+  $('pmOpen').dataset.plid=plid;
+  $('plModalList').innerHTML='<div class="secLoading">곡 불러오는 중…</div>';
+  $('plModal').classList.add('show');
+  try{
+    let all=[], pageToken='';
+    // 최대 2페이지(100곡)
+    for(let p=0;p<2;p++){
+      const data=await ytFetch('playlistItems',{ part:'snippet', playlistId:plid, maxResults:'50', ...(pageToken?{pageToken}:{}) });
+      all=all.concat(data.items||[]);
+      if(!data.nextPageToken) break;
+      pageToken=data.nextPageToken;
+    }
+    if(all.length===0){ $('plModalList').innerHTML='<div class="secError">곡을 찾지 못했어요. (비공개 재생목록일 수 있어요)</div>'; return; }
+    let html='';
+    all.forEach((it,i)=>{
+      const sn=it.snippet; if(!sn||!sn.resourceId) return;
+      const vid=sn.resourceId.videoId;
+      const thumb=(sn.thumbnails && (sn.thumbnails.default||sn.thumbnails.medium)||{}).url||'';
+      const title=cleanTitle(sn.title);
+      const artist=(sn.videoOwnerChannelTitle||'').replace(/ - Topic$/,'');
+      html+=`<div class="rankRow" data-vid="${vid}"><div class="rankNum">${i+1}</div><img class="rankThumb" src="${thumb}" loading="lazy"><div class="rankInfo"><div class="rankTitle">${esc(title)}</div><div class="rankArtist">${esc(artist)}</div></div><button class="rankPlay">▶</button></div>`;
+    });
+    $('plModalList').innerHTML=html;
+  }catch(err){ $('plModalList').innerHTML=errorHtml(err); }
+}
+
+/* ---- 유튜브뮤직으로 열기 ---- */
+function openInMusic(vid){
+  // 유튜브뮤직 앱으로 점프 (없으면 웹)
+  window.location.href='https://music.youtube.com/watch?v='+vid;
+}
+function openPlaylistInMusic(plid){
+  window.location.href='https://music.youtube.com/playlist?list='+plid;
+}
+
+/* ---- 클릭 처리 ---- */
+document.addEventListener('click',e=>{
+  const card=e.target.closest('.plCard');
+  if(card){ openPlaylist(card.dataset.plid, card.dataset.title); return; }
+  const row=e.target.closest('.rankRow, .chartTop');
+  if(row && row.dataset.vid){ openInMusic(row.dataset.vid); return; }
+});
+$('pmOpen').addEventListener('click',()=>{ const plid=$('pmOpen').dataset.plid; if(plid)openPlaylistInMusic(plid); });
+$('plModalClose').addEventListener('click',()=>$('plModal').classList.remove('show'));
+
+/* ---- 에러 표시 ---- */
+function errorHtml(err){
+  if(err.noKey) return `<div class="secError"><b>API 키가 필요해요.</b><br>오른쪽 위 ⚙ 설정에서 키를 넣어주세요.</div>`;
+  if(err.api){
+    const reason=(err.api.errors&&err.api.errors[0]&&err.api.errors[0].reason)||'';
+    if(reason==='quotaExceeded') return `<div class="secError">오늘 사용량을 다 썼어요. 내일 자정에 다시 채워져요.</div>`;
+    if(reason==='keyInvalid'||reason==='badRequest') return `<div class="secError"><b>API 키가 올바르지 않아요.</b><br>⚙ 설정에서 키를 다시 확인해주세요.</div>`;
+    return `<div class="secError">오류: ${esc(err.api.message||'알 수 없음')}</div>`;
+  }
+  return `<div class="secError">인터넷 연결을 확인해주세요.</div>`;
+}
+
+/* ---- 전체 로드 ---- */
+async function loadAll(){
+  if(!getApiKey()){
+    const msg=`<div class="secError"><b>API 키가 필요해요.</b><br>오른쪽 위 ⚙ 설정에서 키를 넣어주세요.</div>`;
+    $('chartBody').innerHTML=msg; $('myBody').innerHTML=''; $('officialBody').innerHTML='';
+    return;
+  }
+  $('chartBody').innerHTML='<div class="secLoading">불러오는 중…</div>';
+  $('myBody').innerHTML='<div class="secLoading">불러오는 중…</div>';
+  $('officialBody').innerHTML='<div class="secLoading">불러오는 중…</div>';
+  loadChart();
+  loadPlaylistCards(getMyPls(), $('myBody'),'my');
+  loadPlaylistCards(getOffPls(), $('officialBody'),'off');
+}
+
+/* ---- 새로고침 ---- */
+$('refreshBtn').addEventListener('click',()=>{ toast('새로고침'); loadAll(); });
+
+/* ---- 지역 토글 ---- */
+$('chartRegion').addEventListener('click',()=>{
+  const cur=getRegion(); const next=cur==='KR'?'US':'KR';
+  Store.set('region',next);
+  $('chartRegion').textContent=(next==='KR'?'한국':'미국')+' ▾';
+  loadChart();
+});
+
+/* ---- 설정 모달 ---- */
+$('setBtn').addEventListener('click',openSettings);
+$('addMyBtn').addEventListener('click',()=>{openSettings();setTimeout(()=>$('myPlInput').focus(),200);});
+$('addOffBtn').addEventListener('click',()=>{openSettings();setTimeout(()=>$('offPlInput').focus(),200);});
+$('setClose').addEventListener('click',()=>$('setModal').classList.remove('show'));
+function openSettings(){
+  $('apiKeyInput').value=getApiKey();
+  renderSavedPls();
+  $('setModal').classList.add('show');
+}
+$('saveKeyBtn').addEventListener('click',()=>{
+  const k=$('apiKeyInput').value.trim();
+  Store.set('apiKey',k);
+  toast(k?'API 키 저장됨':'키를 비웠어요');
+  if(k){ $('setModal').classList.remove('show'); loadAll(); }
+});
+$('reloadBtn').addEventListener('click',()=>{ $('setModal').classList.remove('show'); loadAll(); });
+
+/* 재생목록 추가/삭제 */
+$('myPlAdd').addEventListener('click',()=>addPl('myPls','myPlInput',DEFAULT_MY));
+$('offPlAdd').addEventListener('click',()=>addPl('offPls','offPlInput',DEFAULT_OFFICIAL));
+function addPl(storeKey,inputId,def){
+  const url=$(inputId).value.trim();
+  const id=extractPlaylistId(url);
+  if(!id){ toast('재생목록 링크가 아니에요'); return; }
+  const cur=Store.get(storeKey,def).slice();
+  if(cur.some(p=>extractPlaylistId(p.url)===id)){ toast('이미 있어요'); return; }
+  cur.push({url}); Store.set(storeKey,cur);
+  $(inputId).value=''; renderSavedPls(); toast('추가됨 · 새로고침하면 보여요');
+}
+function renderSavedPls(){
+  const my=getMyPls(), off=getOffPls();
+  $('myPlList').innerHTML=my.map((p,i)=>savedRow(p,i,'my')).join('')||'<div class="setHelp">없음</div>';
+  $('offPlList').innerHTML=off.map((p,i)=>savedRow(p,i,'off')).join('')||'<div class="setHelp">없음</div>';
+}
+function savedRow(p,i,kind){
+  const id=extractPlaylistId(p.url)||'?';
+  return `<div class="savedPl"><span class="spName">${esc(id)}</span><button class="spDel" data-kind="${kind}" data-i="${i}">×</button></div>`;
+}
+$('myPlList').addEventListener('click',e=>delPl(e,'myPls',DEFAULT_MY));
+$('offPlList').addEventListener('click',e=>delPl(e,'offPls',DEFAULT_OFFICIAL));
+function delPl(e,storeKey,def){
+  const btn=e.target.closest('.spDel'); if(!btn)return;
+  const i=+btn.dataset.i; const cur=Store.get(storeKey,def).slice();
+  cur.splice(i,1); Store.set(storeKey,cur); renderSavedPls(); toast('삭제됨');
+}
+
+/* ---- 유틸 ---- */
+function cleanTitle(t){
+  return String(t).replace(/\(Official.*?\)/gi,'').replace(/\[Official.*?\]/gi,'')
+    .replace(/\(M\/V\)/gi,'').replace(/\(MV\)/gi,'').replace(/\(Audio\)/gi,'')
+    .replace(/\(Lyric.*?\)/gi,'').replace(/M\/V/g,'').trim();
+}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+let toastT;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1500);}
+
+/* ---- 시작 ---- */
+$('chartRegion').textContent=(getRegion()==='KR'?'한국':'미국')+' ▾';
+loadAll();
+</script>
+</body>
+</html>
