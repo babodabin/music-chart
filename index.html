@@ -389,7 +389,10 @@ function renderSongList(){
   let arr=curSongs.slice();
   if(mode==='artist') arr.sort((a,b)=>(a.artist||'').localeCompare(b.artist||'','ko'));
   let html='';
-  arr.forEach((s,i)=>{ html+=rowHtml(i+1,s.vid,s.title,s.artist,s.thumb); });
+  arr.forEach((s,i)=>{
+    // rowHtml에 data-pos(원래 재생목록 위치) 주입
+    html+=rowHtml(i+1,s.vid,s.title,s.artist,s.thumb).replace('class="rankRow"','class="rankRow" data-pos="'+s.pos+'"');
+  });
   $('plModalList').innerHTML=html||'<div class="secError">곡을 찾지 못했어요.</div>';
   $('songSortBtn').innerHTML='<span class="si">↕</span>'+(mode==='artist'?'🎤 가수순':'원래순');
 }
@@ -415,17 +418,23 @@ async function openPlaylist(plid, title){
         vid:sn.resourceId.videoId,
         thumb:(sn.thumbnails && (sn.thumbnails.default||sn.thumbnails.medium)||{}).url||'',
         title:cleanTitle(sn.title),
-        artist:(sn.videoOwnerChannelTitle||'').replace(/ - Topic$/,'')
+        artist:(sn.videoOwnerChannelTitle||'').replace(/ - Topic$/,''),
+        pos:(typeof sn.position==='number'?sn.position:0) // 재생목록 내 원래 위치(0부터)
       };
     }).filter(Boolean);
     $('plSortBar').style.display='flex';
     renderSongList();
   }catch(err){ $('plModalList').innerHTML=errorHtml(err); }
 }
-function openInMusic(vid, plid){
-  let url='https://music.youtube.com/watch?v='+vid;
-  if(plid) url+='&list='+plid; // 재생목록 맥락에서 재생
-  window.location.href=url;
+function openInMusic(vid, plid, idx){
+  if(plid){
+    // 재생목록 전체를 열되, 누른 곡 위치로 이동 ("앱에서 열기"와 같은 형식이라 잘 동작)
+    let url='https://music.youtube.com/playlist?list='+plid;
+    if(idx) url+='&index='+idx;
+    window.location.href=url;
+  } else {
+    window.location.href='https://music.youtube.com/watch?v='+vid;
+  }
 }
 function openPlaylistInMusic(plid){ window.location.href='https://music.youtube.com/playlist?list='+plid; }
 document.addEventListener('click',e=>{
@@ -435,10 +444,12 @@ document.addEventListener('click',e=>{
   if(row && row.dataset.vid){
     // 재생 기록 남기고 점프
     recordPlay(row.dataset.vid, row.dataset.title||'', row.dataset.artist||'', row.dataset.thumb||'');
-    // 재생목록 모달 안에서 누른 곡이면 재생목록 맥락으로 열기
+    // 재생목록 모달 안에서 누른 곡이면 재생목록 전체를 그 곡 위치부터 열기
     const inModal=$('plModal').classList.contains('show');
     const plid=inModal ? ($('pmOpen').dataset.plid||'') : '';
-    openInMusic(row.dataset.vid, plid);
+    const pos=row.dataset.pos!=null ? parseInt(row.dataset.pos,10) : NaN;
+    const idx=(!isNaN(pos)) ? pos+1 : 0; // YouTube index는 1부터
+    openInMusic(row.dataset.vid, plid, idx);
     return;
   }
 });
