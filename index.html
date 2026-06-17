@@ -19,25 +19,26 @@
   body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
     background:var(--bg);color:var(--txt);display:flex;flex-direction:column;height:100dvh;
     user-select:none;-webkit-user-select:none;}
-  #header{flex:0 0 auto;padding:calc(env(safe-area-inset-top) + 12px) 16px 8px;
+  #header{flex:0 0 auto;padding:calc(env(safe-area-inset-top) + 12px) 16px 6px;
     display:flex;align-items:center;justify-content:space-between;background:var(--bg);}
   #header h1{font-size:22px;font-weight:800;letter-spacing:-.5px;}
   #header h1 span{color:var(--red);}
   #headBtns{display:flex;gap:6px;}
-  .iconBtn{width:38px;height:38px;border:none;background:var(--bg2);border-radius:50%;
-    color:var(--txt);font-size:17px;display:flex;align-items:center;justify-content:center;}
+  .iconBtn{width:40px;height:40px;border:none;background:var(--bg2);border-radius:50%;
+    color:var(--txt);font-size:18px;display:flex;align-items:center;justify-content:center;}
   .iconBtn:active{background:var(--bg3);}
-  #tabs{flex:0 0 auto;display:flex;gap:6px;padding:4px 12px 10px;background:var(--bg);overflow-x:auto;}
+  /* 탭 — 크게, 터치 쉽게 */
+  #tabs{flex:0 0 auto;display:flex;gap:8px;padding:6px 14px 12px;background:var(--bg);overflow-x:auto;}
   #tabs::-webkit-scrollbar{display:none;}
-  .tab{flex:0 0 auto;background:var(--bg2);border:none;border-radius:18px;color:var(--dim);
-    font-size:14px;font-weight:600;padding:9px 16px;white-space:nowrap;}
+  .tab{flex:0 0 auto;background:var(--bg2);border:none;border-radius:14px;color:var(--dim);
+    font-size:15px;font-weight:700;padding:12px 20px;white-space:nowrap;transition:background .15s;}
   .tab.active{background:var(--red);color:#fff;}
+  .tab:active{transform:scale(.96);}
   #content{flex:1 1 auto;overflow-y:auto;padding:6px 0 calc(env(safe-area-inset-bottom) + 20px);position:relative;}
-  #chartRegionBar{display:flex;align-items:center;justify-content:center;gap:0;padding:4px 16px 10px;}
-  .regBtn{flex:1;background:var(--bg2);border:none;color:var(--dim);font-size:14px;font-weight:600;padding:9px 0;}
-  .regBtn:first-child{border-radius:10px 0 0 10px;}
-  .regBtn:last-child{border-radius:0 10px 10px 0;}
-  .regBtn.active{background:var(--red);color:#fff;}
+  /* 세그먼트 (한국/미국 또는 전체/월간/주간) */
+  .segBar{display:flex;gap:0;margin:4px 16px 10px;background:var(--bg2);border-radius:11px;padding:3px;}
+  .segBtn{flex:1;background:none;border:none;color:var(--dim);font-size:14px;font-weight:600;padding:9px 0;border-radius:9px;}
+  .segBtn.active{background:var(--red);color:#fff;}
   #swipeHint{text-align:center;font-size:11px;color:var(--dim2);padding-bottom:8px;}
   .chartTop{margin:0 16px 12px;border-radius:16px;overflow:hidden;position:relative;
     background:var(--bg2);display:flex;flex-direction:column;}
@@ -55,6 +56,7 @@
   .rankInfo{flex:1;min-width:0;}
   .rankTitle{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .rankArtist{font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+  .rankCount{flex:0 0 auto;font-size:11px;color:var(--dim2);background:var(--bg2);padding:3px 8px;border-radius:10px;}
   .rankPlay{flex:0 0 auto;width:32px;height:32px;border:none;background:none;color:var(--dim);font-size:18px;}
   .rankPlay:active{color:var(--red);}
   .plGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:8px 16px;}
@@ -67,6 +69,8 @@
   .secError{margin:16px;padding:16px;background:var(--bg2);border-radius:12px;
     color:var(--dim);font-size:13px;line-height:1.7;text-align:center;}
   .secError b{color:var(--red);}
+  .emptyMsg{padding:50px 24px;text-align:center;color:var(--dim);font-size:14px;line-height:1.8;}
+  .emptyMsg .big{font-size:40px;margin-bottom:12px;}
   #plModal{position:fixed;inset:0;z-index:40;background:var(--bg);display:none;flex-direction:column;
     padding-top:env(safe-area-inset-top);}
   #plModal.show{display:flex;}
@@ -92,6 +96,7 @@
     font-size:15px;font-weight:700;padding:13px 0;margin-top:12px;}
   .setBtn:active{background:var(--reddim);}
   .setBtn.sec{background:var(--bg2);color:var(--txt);}
+  .setBtn.danger{background:var(--bg2);color:var(--red);}
   .plAddRow{display:flex;gap:8px;margin-top:8px;}
   .plAddRow .setInput{flex:1;}
   .plAddRow button{flex:0 0 auto;background:var(--bg3);border:none;border-radius:10px;color:var(--txt);
@@ -116,6 +121,7 @@
   </div>
   <div id="tabs">
     <button class="tab active" data-tab="chart">순위</button>
+    <button class="tab" data-tab="mychart">내 순위</button>
     <button class="tab" data-tab="my">내 음악</button>
     <button class="tab" data-tab="official">추천</button>
     <button class="tab" data-tab="period">기간별</button>
@@ -145,6 +151,9 @@
       <div class="setLabel">📅 기간별 재생목록</div>
       <div class="plAddRow"><input class="setInput" id="perPlInput" type="text" placeholder="재생목록 링크 붙여넣기" autocomplete="off"><button id="perPlAdd">추가</button></div>
       <div id="perPlList"></div>
+      <div class="setLabel">🏆 내 순위 기록</div>
+      <div class="setHelp">곡을 누를 때마다 자동으로 기록돼서 '내 순위' 탭에 쌓여요.</div>
+      <button class="setBtn danger" id="clearHistBtn" style="margin-top:10px;">내 순위 기록 초기화</button>
       <button class="setBtn sec" id="reloadBtn" style="margin-top:22px;">변경사항 적용</button>
     </div>
   </div>
@@ -172,16 +181,42 @@ const DEFAULT_OFFICIAL=[
   {url:'https://youtube.com/playlist?list=RDCLAK5uy_l7wbVbkC-dG5fyEQQsBfjm_z3dLAhYyvo'},
   {url:'https://youtube.com/playlist?list=RDCLAK5uy_nMqMWmqwZwDvMcqcAohgO_Dp_7zT1nSC8'},
 ];
-const DEFAULT_PERIOD=[
-  {url:'https://music.youtube.com/playlist?list=LRSRD6bXFNsKNbo1PzaHva-CpzXCeyrweHiKA'},
-];
+const DEFAULT_PERIOD=[];
 function getApiKey(){ return Store.get('apiKey',''); }
 function getMyPls(){ return Store.get('myPls', DEFAULT_MY); }
 function getOffPls(){ return Store.get('offPls', DEFAULT_OFFICIAL); }
 function getPerPls(){ return Store.get('perPls', DEFAULT_PERIOD); }
 function getRegion(){ return Store.get('region','KR'); }
+function getMyPeriod(){ return Store.get('myPeriod','all'); }
 let currentTab='chart';
 function extractPlaylistId(url){ const m=String(url).match(/[?&]list=([^&]+)/); return m?m[1]:null; }
+
+/* ===== 내 순위: 재생 기록 ===== */
+/* history = [{vid,title,artist,thumb,times:[ts,ts,...]}] */
+function getHistory(){ return Store.get('playHistory', []); }
+function recordPlay(vid,title,artist,thumb){
+  if(!vid)return;
+  const hist=getHistory();
+  let e=hist.find(h=>h.vid===vid);
+  if(!e){ e={vid,title,artist,thumb,times:[]}; hist.push(e); }
+  e.title=title; e.artist=artist; e.thumb=thumb; // 최신 정보로 갱신
+  e.times.push(Date.now());
+  Store.set('playHistory', hist);
+}
+function rankByPeriod(period){
+  const now=Date.now();
+  let since=0;
+  if(period==='week') since=now-7*24*3600*1000;
+  else if(period==='month') since=now-30*24*3600*1000;
+  const hist=getHistory();
+  const arr=hist.map(h=>{
+    const cnt=h.times.filter(t=>t>=since).length;
+    return {...h, count:cnt};
+  }).filter(h=>h.count>0);
+  arr.sort((a,b)=>b.count-a.count);
+  return arr;
+}
+
 const API='https://www.googleapis.com/youtube/v3/';
 async function ytFetch(endpoint, params){
   const key=getApiKey();
@@ -200,6 +235,7 @@ document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
 }));
 function renderTab(){
   const c=$('content');
+  if(currentTab==='mychart'){ renderMyChart(); return; } // 내 순위는 API 키 없어도 됨
   if(!getApiKey()){
     c.innerHTML='<div class="secError"><b>API 키가 필요해요.</b><br>오른쪽 위 \u2699 설정에서 키를 넣어주세요.</div>';
     return;
@@ -209,16 +245,18 @@ function renderTab(){
   else if(currentTab==='official'){ renderPlaylistGrid(getOffPls(),'추천'); }
   else if(currentTab==='period'){ renderPlaylistGrid(getPerPls(),'기간별'); }
 }
+
+/* ===== 순위 (유튜브 인기) ===== */
 function renderChart(){
   const c=$('content');
   c.innerHTML=
-    '<div id="chartRegionBar">'+
-      '<button class="regBtn '+(getRegion()==='KR'?'active':'')+'" data-reg="KR">🇰🇷 한국</button>'+
-      '<button class="regBtn '+(getRegion()==='US'?'active':'')+'" data-reg="US">🇺🇸 미국</button>'+
+    '<div class="segBar">'+
+      '<button class="segBtn '+(getRegion()==='KR'?'active':'')+'" data-reg="KR">🇰🇷 한국</button>'+
+      '<button class="segBtn '+(getRegion()==='US'?'active':'')+'" data-reg="US">🇺🇸 미국</button>'+
     '</div>'+
     '<div id="swipeHint">← 좌우로 밀어서 전환 →</div>'+
     '<div id="chartBody"><div class="secLoading">불러오는 중…</div></div>';
-  c.querySelectorAll('.regBtn').forEach(b=>b.addEventListener('click',()=>{
+  c.querySelectorAll('.segBtn').forEach(b=>b.addEventListener('click',()=>{
     if(b.dataset.reg===getRegion())return;
     Store.set('region',b.dataset.reg); renderChart();
   }));
@@ -241,24 +279,66 @@ async function loadChart(){
       const artist=(sn.videoOwnerChannelTitle||sn.channelTitle||'').replace(/ - Topic$/,'');
       if(i===0){
         const big=(sn.thumbnails.maxres||sn.thumbnails.high||sn.thumbnails.medium).url;
-        html+='<div class="chartTop" data-vid="'+vid+'"><img class="ctImg" src="'+big+'" loading="lazy"><div class="ctInfo"><span class="ctRank">1위</span><div class="ctTitle">'+esc(title)+'</div><div class="ctArtist">'+esc(artist)+'</div></div></div>';
+        html+='<div class="chartTop" data-vid="'+vid+'" data-title="'+esc(title)+'" data-artist="'+esc(artist)+'" data-thumb="'+thumb+'"><img class="ctImg" src="'+big+'" loading="lazy"><div class="ctInfo"><span class="ctRank">1위</span><div class="ctTitle">'+esc(title)+'</div><div class="ctArtist">'+esc(artist)+'</div></div></div>';
       } else {
-        html+='<div class="rankRow" data-vid="'+vid+'"><div class="rankNum">'+(i+1)+'</div><img class="rankThumb" src="'+thumb+'" loading="lazy"><div class="rankInfo"><div class="rankTitle">'+esc(title)+'</div><div class="rankArtist">'+esc(artist)+'</div></div><button class="rankPlay">▶</button></div>';
+        html+=rowHtml(i+1,vid,title,artist,thumb);
       }
     });
     body.innerHTML=html;
   }catch(err){ body.innerHTML=errorHtml(err); }
 }
+
+/* ===== 내 순위 ===== */
+function renderMyChart(){
+  const c=$('content');
+  const period=getMyPeriod();
+  c.innerHTML=
+    '<div class="segBar">'+
+      '<button class="segBtn '+(period==='all'?'active':'')+'" data-per="all">전체</button>'+
+      '<button class="segBtn '+(period==='month'?'active':'')+'" data-per="month">월간</button>'+
+      '<button class="segBtn '+(period==='week'?'active':'')+'" data-per="week">주간</button>'+
+    '</div>'+
+    '<div id="swipeHint">← 좌우로 밀어서 전환 →</div>'+
+    '<div id="myChartBody"></div>';
+  c.querySelectorAll('.segBtn').forEach(b=>b.addEventListener('click',()=>{
+    if(b.dataset.per===getMyPeriod())return;
+    Store.set('myPeriod',b.dataset.per); renderMyChart();
+  }));
+  const ranked=rankByPeriod(period);
+  const body=$('myChartBody');
+  if(ranked.length===0){
+    body.innerHTML='<div class="emptyMsg"><div class="big">🏆</div>아직 기록이 없어요.<br>곡을 누르면 들은 만큼<br>여기 내 순위가 쌓여요.</div>';
+    return;
+  }
+  let html='';
+  ranked.forEach((h,i)=>{
+    if(i===0){
+      html+='<div class="chartTop" data-vid="'+h.vid+'" data-title="'+esc(h.title)+'" data-artist="'+esc(h.artist)+'" data-thumb="'+(h.thumb||'')+'"><img class="ctImg" src="'+(h.thumb||'')+'" loading="lazy" style="aspect-ratio:1;object-fit:cover;max-height:220px"><div class="ctInfo"><span class="ctRank">1위 · '+h.count+'회</span><div class="ctTitle">'+esc(h.title)+'</div><div class="ctArtist">'+esc(h.artist)+'</div></div></div>';
+    } else {
+      html+=rowHtmlCount(i+1,h.vid,h.title,h.artist,h.thumb,h.count);
+    }
+  });
+  body.innerHTML=html;
+}
+
+function rowHtml(n,vid,title,artist,thumb){
+  return '<div class="rankRow" data-vid="'+vid+'" data-title="'+esc(title)+'" data-artist="'+esc(artist)+'" data-thumb="'+(thumb||'')+'"><div class="rankNum'+(n<=3?' top':'')+'">'+n+'</div><img class="rankThumb" src="'+(thumb||'')+'" loading="lazy"><div class="rankInfo"><div class="rankTitle">'+esc(title)+'</div><div class="rankArtist">'+esc(artist)+'</div></div><button class="rankPlay">▶</button></div>';
+}
+function rowHtmlCount(n,vid,title,artist,thumb,count){
+  return '<div class="rankRow" data-vid="'+vid+'" data-title="'+esc(title)+'" data-artist="'+esc(artist)+'" data-thumb="'+(thumb||'')+'"><div class="rankNum'+(n<=3?' top':'')+'">'+n+'</div><img class="rankThumb" src="'+(thumb||'')+'" loading="lazy"><div class="rankInfo"><div class="rankTitle">'+esc(title)+'</div><div class="rankArtist">'+esc(artist)+'</div></div><span class="rankCount">'+count+'회</span></div>';
+}
+
+/* ===== 재생목록 카드 ===== */
 async function renderPlaylistGrid(pls, label){
   const c=$('content');
-  if(!pls || pls.length===0){ c.innerHTML='<div class="secError">'+label+'에 재생목록이 없어요.<br><b>\u2699 설정</b>에서 링크를 추가하세요.</div>'; return; }
+  if(!pls || pls.length===0){ c.innerHTML='<div class="emptyMsg"><div class="big">📂</div>'+label+'에 재생목록이 없어요.<br><b style="color:var(--red)">⚙ 설정</b>에서 링크를 추가하세요.</div>'; return; }
   c.innerHTML='<div class="secLoading">불러오는 중…</div>';
   try{
     const ids=pls.map(p=>extractPlaylistId(p.url)).filter(Boolean);
     if(ids.length===0){ c.innerHTML='<div class="secError">재생목록 링크를 인식하지 못했어요.</div>'; return; }
     const data=await ytFetch('playlists',{ part:'snippet,contentDetails', id:ids.join(','), maxResults:'50' });
     const items=data.items||[];
-    if(items.length===0){ c.innerHTML='<div class="secError">재생목록을 찾지 못했어요. (비공개일 수 있어요)</div>'; return; }
+    if(items.length===0){ c.innerHTML='<div class="secError">재생목록을 찾지 못했어요. (비공개이거나 자동 생성 목록일 수 있어요)</div>'; return; }
     let html='<div class="plGrid">';
     items.forEach(it=>{
       const sn=it.snippet;
@@ -291,7 +371,7 @@ async function openPlaylist(plid, title){
       const thumb=(sn.thumbnails && (sn.thumbnails.default||sn.thumbnails.medium)||{}).url||'';
       const title=cleanTitle(sn.title);
       const artist=(sn.videoOwnerChannelTitle||'').replace(/ - Topic$/,'');
-      html+='<div class="rankRow" data-vid="'+vid+'"><div class="rankNum">'+(i+1)+'</div><img class="rankThumb" src="'+thumb+'" loading="lazy"><div class="rankInfo"><div class="rankTitle">'+esc(title)+'</div><div class="rankArtist">'+esc(artist)+'</div></div><button class="rankPlay">▶</button></div>';
+      html+=rowHtml(i+1,vid,title,artist,thumb);
     });
     $('plModalList').innerHTML=html;
   }catch(err){ $('plModalList').innerHTML=errorHtml(err); }
@@ -302,18 +382,32 @@ document.addEventListener('click',e=>{
   const card=e.target.closest('.plCard');
   if(card){ openPlaylist(card.dataset.plid, card.dataset.title); return; }
   const row=e.target.closest('.rankRow, .chartTop');
-  if(row && row.dataset.vid){ openInMusic(row.dataset.vid); return; }
+  if(row && row.dataset.vid){
+    // 재생 기록 남기고 점프
+    recordPlay(row.dataset.vid, row.dataset.title||'', row.dataset.artist||'', row.dataset.thumb||'');
+    openInMusic(row.dataset.vid);
+    return;
+  }
 });
 $('pmOpen').addEventListener('click',()=>{ const plid=$('pmOpen').dataset.plid; if(plid)openPlaylistInMusic(plid); });
 $('plModalClose').addEventListener('click',()=>$('plModal').classList.remove('show'));
+/* 좌우 스와이프 — 순위(한국/미국) + 내 순위(전체/월간/주간) */
 let touchX=null;
-$('content').addEventListener('touchstart',e=>{ if(currentTab==='chart')touchX=e.touches[0].clientX; },{passive:true});
+$('content').addEventListener('touchstart',e=>{ if(currentTab==='chart'||currentTab==='mychart')touchX=e.touches[0].clientX; },{passive:true});
 $('content').addEventListener('touchend',e=>{
-  if(currentTab!=='chart'||touchX===null)return;
+  if(touchX===null)return;
   const dx=e.changedTouches[0].clientX-touchX; touchX=null;
   if(Math.abs(dx)<60)return;
-  const next=dx<0?'US':'KR';
-  if(next!==getRegion()){ Store.set('region',next); renderChart(); }
+  if(currentTab==='chart'){
+    const next=dx<0?'US':'KR';
+    if(next!==getRegion()){ Store.set('region',next); renderChart(); }
+  } else if(currentTab==='mychart'){
+    const order=['all','month','week'];
+    let idx=order.indexOf(getMyPeriod());
+    if(dx<0 && idx<order.length-1) idx++;
+    else if(dx>0 && idx>0) idx--;
+    Store.set('myPeriod',order[idx]); renderMyChart();
+  }
 },{passive:true});
 function errorHtml(err){
   if(err.noKey) return '<div class="secError"><b>API 키가 필요해요.</b><br>\u2699 설정에서 키를 넣어주세요.</div>';
@@ -340,6 +434,12 @@ $('saveKeyBtn').addEventListener('click',()=>{
   if(k){ $('setModal').classList.remove('show'); renderTab(); }
 });
 $('reloadBtn').addEventListener('click',()=>{ $('setModal').classList.remove('show'); renderTab(); });
+$('clearHistBtn').addEventListener('click',()=>{
+  if(confirm('내 순위 기록을 모두 지울까요? 되돌릴 수 없어요.')){
+    Store.set('playHistory',[]); toast('내 순위 기록 초기화됨');
+    if(currentTab==='mychart') renderMyChart();
+  }
+});
 $('myPlAdd').addEventListener('click',()=>addPl('myPls','myPlInput',DEFAULT_MY));
 $('offPlAdd').addEventListener('click',()=>addPl('offPls','offPlInput',DEFAULT_OFFICIAL));
 $('perPlAdd').addEventListener('click',()=>addPl('perPls','perPlInput',DEFAULT_PERIOD));
