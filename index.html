@@ -422,7 +422,11 @@ async function openPlaylist(plid, title){
     renderSongList();
   }catch(err){ $('plModalList').innerHTML=errorHtml(err); }
 }
-function openInMusic(vid){ window.location.href='https://music.youtube.com/watch?v='+vid; }
+function openInMusic(vid, plid){
+  let url='https://music.youtube.com/watch?v='+vid;
+  if(plid) url+='&list='+plid; // 재생목록 맥락에서 재생
+  window.location.href=url;
+}
 function openPlaylistInMusic(plid){ window.location.href='https://music.youtube.com/playlist?list='+plid; }
 document.addEventListener('click',e=>{
   const card=e.target.closest('.plCard');
@@ -431,7 +435,10 @@ document.addEventListener('click',e=>{
   if(row && row.dataset.vid){
     // 재생 기록 남기고 점프
     recordPlay(row.dataset.vid, row.dataset.title||'', row.dataset.artist||'', row.dataset.thumb||'');
-    openInMusic(row.dataset.vid);
+    // 재생목록 모달 안에서 누른 곡이면 재생목록 맥락으로 열기
+    const inModal=$('plModal').classList.contains('show');
+    const plid=inModal ? ($('pmOpen').dataset.plid||'') : '';
+    openInMusic(row.dataset.vid, plid);
     return;
   }
 });
