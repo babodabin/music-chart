@@ -428,10 +428,8 @@ async function openPlaylist(plid, title){
 }
 function openInMusic(vid, plid, idx){
   if(plid){
-    // 재생목록 전체를 열되, 누른 곡 위치로 이동 ("앱에서 열기"와 같은 형식이라 잘 동작)
-    let url='https://music.youtube.com/playlist?list='+plid;
-    if(idx) url+='&index='+idx;
-    window.location.href=url;
+    // "앱에서 열기"와 완전히 동일하게 재생목록 전체 열기 (이 형식은 재생이 잘 됨)
+    window.location.href='https://music.youtube.com/playlist?list='+plid;
   } else {
     window.location.href='https://music.youtube.com/watch?v='+vid;
   }
