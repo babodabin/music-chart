@@ -426,13 +426,9 @@ async function openPlaylist(plid, title){
     renderSongList();
   }catch(err){ $('plModalList').innerHTML=errorHtml(err); }
 }
-function openInMusic(vid, plid, idx){
-  if(plid){
-    // "앱에서 열기"와 완전히 동일하게 재생목록 전체 열기 (이 형식은 재생이 잘 됨)
-    window.location.href='https://music.youtube.com/playlist?list='+plid;
-  } else {
-    window.location.href='https://music.youtube.com/watch?v='+vid;
-  }
+function openInMusic(vid){
+  // watch?v= 형식만 형 환경에서 재생이 확실히 됨 (순위 탭과 동일)
+  window.location.href='https://music.youtube.com/watch?v='+vid;
 }
 function openPlaylistInMusic(plid){ window.location.href='https://music.youtube.com/playlist?list='+plid; }
 document.addEventListener('click',e=>{
@@ -440,14 +436,9 @@ document.addEventListener('click',e=>{
   if(card){ openPlaylist(card.dataset.plid, card.dataset.title); return; }
   const row=e.target.closest('.rankRow, .chartTop');
   if(row && row.dataset.vid){
-    // 재생 기록 남기고 점프
+    // 재생 기록 남기고 점프 (재생목록 모달이든 순위든 동일하게 곡 재생)
     recordPlay(row.dataset.vid, row.dataset.title||'', row.dataset.artist||'', row.dataset.thumb||'');
-    // 재생목록 모달 안에서 누른 곡이면 재생목록 전체를 그 곡 위치부터 열기
-    const inModal=$('plModal').classList.contains('show');
-    const plid=inModal ? ($('pmOpen').dataset.plid||'') : '';
-    const pos=row.dataset.pos!=null ? parseInt(row.dataset.pos,10) : NaN;
-    const idx=(!isNaN(pos)) ? pos+1 : 0; // YouTube index는 1부터
-    openInMusic(row.dataset.vid, plid, idx);
+    openInMusic(row.dataset.vid);
     return;
   }
 });
