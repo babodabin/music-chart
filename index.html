@@ -392,20 +392,30 @@ document.addEventListener('click',e=>{
 $('pmOpen').addEventListener('click',()=>{ const plid=$('pmOpen').dataset.plid; if(plid)openPlaylistInMusic(plid); });
 $('plModalClose').addEventListener('click',()=>$('plModal').classList.remove('show'));
 /* 좌우 스와이프 — 순위(한국/미국) + 내 순위(전체/월간/주간) */
-let touchX=null;
-$('content').addEventListener('touchstart',e=>{ if(currentTab==='chart'||currentTab==='mychart')touchX=e.touches[0].clientX; },{passive:true});
+let touchX=null, touchY=null;
+$('content').addEventListener('touchstart',e=>{
+  if(currentTab==='chart'||currentTab==='mychart'){
+    touchX=e.touches[0].clientX; touchY=e.touches[0].clientY;
+  }
+},{passive:true});
 $('content').addEventListener('touchend',e=>{
   if(touchX===null)return;
-  const dx=e.changedTouches[0].clientX-touchX; touchX=null;
-  if(Math.abs(dx)<60)return;
+  const dx=e.changedTouches[0].clientX-touchX;
+  const dy=e.changedTouches[0].clientY-touchY;
+  touchX=null; touchY=null;
+  // 수평 이동이 충분히 크고, 수직 이동보다 우세할 때만 전환 (세로 스크롤 오인 방지)
+  if(Math.abs(dx)<60) return;
+  if(Math.abs(dx)<Math.abs(dy)*1.5) return;
+  const dir=dx<0?1:-1; // 왼쪽으로 밀면 다음
   if(currentTab==='chart'){
-    const next=dx<0?'US':'KR';
-    if(next!==getRegion()){ Store.set('region',next); renderChart(); }
+    const order=['KR','US'];
+    let idx=order.indexOf(getRegion());
+    idx=(idx+dir+order.length)%order.length; // 순환
+    Store.set('region',order[idx]); renderChart();
   } else if(currentTab==='mychart'){
     const order=['all','month','week'];
     let idx=order.indexOf(getMyPeriod());
-    if(dx<0 && idx<order.length-1) idx++;
-    else if(dx>0 && idx>0) idx--;
+    idx=(idx+dir+order.length)%order.length; // 순환
     Store.set('myPeriod',order[idx]); renderMyChart();
   }
 },{passive:true});
