@@ -431,11 +431,11 @@ async function openPlaylist(plid, title){
 }
 function openInMusic(vid, plid){
   // 곡 하나만 재생: watch?v=  /  재생목록 안의 곡: watch?v=...&list=... (그 곡부터 목록 이어 재생)
-  let url='https://music.youtube.com/watch?v='+vid;
+  let url='https://www.youtube.com/watch?v='+vid;
   if(plid) url+='&list='+plid;
   window.location.href=url;
 }
-function openPlaylistInMusic(plid){ window.location.href='https://music.youtube.com/playlist?list='+plid; }
+function openPlaylistInMusic(plid){ window.location.href='https://www.youtube.com/playlist?list='+plid; }
 document.addEventListener('click',e=>{
   const card=e.target.closest('.plCard');
   if(card){ openPlaylist(card.dataset.plid, card.dataset.title); return; }
