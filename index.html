@@ -208,6 +208,19 @@ function extractPlaylistId(url){ const m=String(url).match(/[?&]list=([^&]+)/); 
 /* ===== 내 순위: 재생 기록 ===== */
 /* history = [{vid,title,artist,thumb,times:[ts,ts,...]}] */
 function getHistory(){ return Store.get('playHistory', []); }
+/* 1년 지난 재생 기록 자동 삭제 (앱 켤 때마다 정리) */
+const HIST_KEEP_MS=365*24*3600*1000;
+function pruneHistory(){
+  const cutoff=Date.now()-HIST_KEEP_MS;
+  const hist=getHistory();
+  let changed=false;
+  const pruned=hist.map(h=>{
+    const t=(h.times||[]).filter(ts=>ts>=cutoff);
+    if(t.length!==(h.times||[]).length) changed=true;
+    return {...h, times:t};
+  }).filter(h=>h.times.length>0);
+  if(changed||pruned.length!==hist.length) Store.set('playHistory', pruned);
+}
 function recordPlay(vid,title,artist,thumb){
   if(!vid)return;
   const hist=getHistory();
@@ -341,7 +354,8 @@ function renderMyChart(){
   let html='';
   ranked.forEach((h,i)=>{
     if(i===0){
-      html+='<div class="chartTop" data-vid="'+h.vid+'" data-title="'+esc(h.title)+'" data-artist="'+esc(h.artist)+'" data-thumb="'+(h.thumb||'')+'"><img class="ctImg" src="'+(h.thumb||'')+'" loading="lazy" style="aspect-ratio:1;object-fit:cover;max-height:220px"><div class="ctInfo"><span class="ctRank">1위 · '+h.count+'회</span><div class="ctTitle">'+esc(h.title)+'</div><div class="ctArtist">'+esc(h.artist)+'</div></div></div>';
+      const topImg=h.thumb?'<img class="ctImg" src="'+h.thumb+'" loading="lazy" style="aspect-ratio:1;object-fit:cover;max-height:220px">':'';
+      html+='<div class="chartTop" data-vid="'+h.vid+'" data-title="'+esc(h.title)+'" data-artist="'+esc(h.artist)+'" data-thumb="'+(h.thumb||'')+'">'+topImg+'<div class="ctInfo" style="display:flex;align-items:center;gap:10px;"><div style="flex:1;min-width:0;"><span class="ctRank">1위 · '+h.count+'회</span><div class="ctTitle">'+esc(h.title)+'</div><div class="ctArtist">'+esc(h.artist)+'</div></div><button class="rankPlay" title="유튜브 뮤직에서 재생" style="font-size:22px;">🎵</button></div></div>';
     } else {
       html+=rowHtmlCount(i+1,h.vid,h.title,h.artist,h.thumb,h.count);
     }
@@ -350,10 +364,10 @@ function renderMyChart(){
 }
 
 function rowHtml(n,vid,title,artist,thumb){
-  return '<div class="rankRow" data-vid="'+vid+'" data-title="'+esc(title)+'" data-artist="'+esc(artist)+'" data-thumb="'+(thumb||'')+'"><div class="rankNum'+(n<=3?' top':'')+'">'+n+'</div><img class="rankThumb" src="'+(thumb||'')+'" loading="lazy"><div class="rankInfo"><div class="rankTitle">'+esc(title)+'</div><div class="rankArtist">'+esc(artist)+'</div></div><button class="rankPlay">▶</button></div>';
+  return '<div class="rankRow" data-vid="'+vid+'" data-title="'+esc(title)+'" data-artist="'+esc(artist)+'" data-thumb="'+(thumb||'')+'"><div class="rankNum'+(n<=3?' top':'')+'">'+n+'</div><img class="rankThumb" src="'+(thumb||'')+'" loading="lazy"><div class="rankInfo"><div class="rankTitle">'+esc(title)+'</div><div class="rankArtist">'+esc(artist)+'</div></div><button class="rankPlay" title="유튜브 뮤직에서 재생">🎵</button></div>';
 }
 function rowHtmlCount(n,vid,title,artist,thumb,count){
-  return '<div class="rankRow" data-vid="'+vid+'" data-title="'+esc(title)+'" data-artist="'+esc(artist)+'" data-thumb="'+(thumb||'')+'"><div class="rankNum'+(n<=3?' top':'')+'">'+n+'</div><img class="rankThumb" src="'+(thumb||'')+'" loading="lazy"><div class="rankInfo"><div class="rankTitle">'+esc(title)+'</div><div class="rankArtist">'+esc(artist)+'</div></div><span class="rankCount">'+count+'회</span></div>';
+  return '<div class="rankRow" data-vid="'+vid+'" data-title="'+esc(title)+'" data-artist="'+esc(artist)+'" data-thumb="'+(thumb||'')+'"><div class="rankNum'+(n<=3?' top':'')+'">'+n+'</div><img class="rankThumb" src="'+(thumb||'')+'" loading="lazy"><div class="rankInfo"><div class="rankTitle">'+esc(title)+'</div><div class="rankArtist">'+esc(artist)+'</div></div><span class="rankCount">'+count+'회</span><button class="rankPlay" title="유튜브 뮤직에서 재생">🎵</button></div>';
 }
 
 /* ===== 재생목록 카드 ===== */
@@ -460,6 +474,16 @@ function openPlaylistInMusic(plid){ window.location.href='https://www.youtube.co
 document.addEventListener('click',e=>{
   const card=e.target.closest('.plCard');
   if(card){ openPlaylist(card.dataset.plid, card.dataset.title); return; }
+  // 🎵 버튼: 유튜브 뮤직으로 열기 (뮤직 전용 곡도 여기서는 재생됨)
+  const mBtn=e.target.closest('.rankPlay');
+  if(mBtn){
+    const mRow=mBtn.closest('.rankRow, .chartTop');
+    if(mRow && mRow.dataset.vid){
+      recordPlay(mRow.dataset.vid, mRow.dataset.title||'', mRow.dataset.artist||'', mRow.dataset.thumb||'');
+      window.location.href='https://music.youtube.com/watch?v='+mRow.dataset.vid;
+    }
+    return;
+  }
   const row=e.target.closest('.rankRow, .chartTop');
   if(row && row.dataset.vid){
     // 재생 기록 남기고 점프
@@ -617,6 +641,7 @@ function cleanTitle(t){
 }
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 let toastT;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('show');},1500);}
+pruneHistory();
 renderTab();
 </script>
 </body>
