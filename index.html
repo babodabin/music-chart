@@ -90,6 +90,33 @@
   .dtBtn.ym{background:#fff;color:#111;}
   .dtBtn.ym:active{background:#ddd;}
   .dtDescT{font-size:12px;color:var(--dim2);font-weight:700;margin:22px 0 7px;}
+  /* 달력 보기 (연간/월간/주간) */
+  .calWrap{background:var(--bg2);border-radius:14px;margin:0 12px 6px;padding:12px;}
+  .calHead{font-size:13px;font-weight:800;margin-bottom:10px;display:flex;justify-content:space-between;align-items:baseline;}
+  .calHead .sub{font-size:10px;color:var(--dim2);font-weight:600;}
+  .calGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
+  .calDow{font-size:10px;color:var(--dim2);text-align:center;font-weight:700;padding:2px 0;}
+  .calCell{aspect-ratio:1;border-radius:8px;background:var(--bg3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:11px;color:var(--dim);}
+  .calCell.on{color:#fff;font-weight:700;}
+  .calCell.empty{background:none;}
+  .calCell.today{box-shadow:0 0 0 1.5px var(--red) inset;}
+  .calCell.sel{box-shadow:0 0 0 2px #fff inset;}
+  .calCell .cnt{font-size:8px;font-weight:700;opacity:.9;}
+  .calGridY{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+  .calCellY{aspect-ratio:1.5;border-radius:9px;background:var(--bg3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;color:var(--dim);}
+  .calCellY.on{color:#fff;font-weight:800;}
+  .calCellY .cnt{font-size:9px;font-weight:700;opacity:.9;}
+  .weekDayRow{display:flex;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);align-items:flex-start;}
+  .weekDayRow:last-child{border-bottom:none;}
+  .wdLabel{flex:0 0 54px;font-size:11px;font-weight:800;color:var(--dim);padding-top:4px;}
+  .wdLabel.today{color:var(--red);}
+  .wdSongs{flex:1;display:flex;flex-wrap:wrap;gap:5px;min-width:0;}
+  .gChip{font-size:10px;padding:4px 8px;border-radius:7px;color:#fff;font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .wdNone{font-size:11px;color:var(--dim2);padding-top:5px;}
+  .legend{display:flex;flex-wrap:wrap;gap:9px;margin-top:11px;}
+  .legend span{font-size:10px;color:var(--dim);display:flex;align-items:center;gap:4px;}
+  .legend i{width:9px;height:9px;border-radius:3px;display:inline-block;}
+  .calSecT{font-size:12px;color:var(--dim2);font-weight:800;margin:14px 14px 8px;}
   .dtDesc{font-size:13px;color:var(--dim);line-height:1.65;white-space:pre-wrap;word-break:break-word;
     background:var(--bg2);border-radius:12px;padding:13px 14px;user-select:text;-webkit-user-select:text;}
   .plGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:8px 16px;}
@@ -238,7 +265,27 @@ function getMyPls(){ return Store.get('myPls', DEFAULT_MY); }
 function getOffPls(){ return Store.get('offPls', DEFAULT_OFFICIAL); }
 function getPerPls(){ return Store.get('perPls', DEFAULT_PERIOD); }
 function getRegion(){ let r=Store.get('region','KR'); if(r==='US') r='GL'; return r; }
-function getMyPeriod(){ return Store.get('myPeriod','all'); }
+function getMyPeriod(){ const p=Store.get('myPeriod','year'); return p==='all'?'year':p; }
+/* ===== 장르: 재생목록 이름 뒤 숫자를 뺀 것 (예: '댄스 1990' -> 댄스) ===== */
+function genreFromTitle(t){
+  if(!t) return '';
+  const g=String(t).replace(/[0-9\s]+$/,'').trim();
+  return g||String(t).trim();
+}
+const GENRE_COLORS={'댄스':'#fb923c','발라드':'#60a5fa','EDM':'#a78bfa','록':'#f87171','인디':'#34d399','힙합':'#facc15'};
+function colorFor(g){
+  if(!g) return '#5b5b5b'; // 기타(출처 모름)
+  if(GENRE_COLORS[g]) return GENRE_COLORS[g];
+  let h=0; for(let i=0;i<g.length;i++) h=(h*31+g.charCodeAt(i))>>>0;
+  return 'hsl('+(h%360)+' 55% 52%)';
+}
+/* 기간 시작: 주간=이번주 월요일 0시 / 월간=이달 1일 / 연간=올해 1월 1일 */
+function periodStart(period){
+  const d=new Date();
+  if(period==='week'){ const dow=(d.getDay()+6)%7; return new Date(d.getFullYear(),d.getMonth(),d.getDate()-dow).getTime(); }
+  if(period==='month') return new Date(d.getFullYear(),d.getMonth(),1).getTime();
+  return new Date(d.getFullYear(),0,1).getTime();
+}
 let currentTab='chart';
 function extractPlaylistId(url){ const m=String(url).match(/[?&]list=([^&]+)/); return m?m[1]:null; }
 
@@ -258,20 +305,39 @@ function pruneHistory(){
   }).filter(h=>h.times.length>0);
   if(changed||pruned.length!==hist.length) Store.set('playHistory', pruned);
 }
-function recordPlay(vid,title,artist,thumb){
+function recordPlay(vid,title,artist,thumb,genre){
   if(!vid)return;
   const hist=getHistory();
   let e=hist.find(h=>h.vid===vid);
   if(!e){ e={vid,title,artist,thumb,times:[]}; hist.push(e); }
   e.title=title; e.artist=artist; e.thumb=thumb; // 최신 정보로 갱신
+  if(genre) e.genre=genre; // 장르 = 재생목록 이름(숫자 제거)
   e.times.push(Date.now());
   Store.set('playHistory', hist);
 }
+/* 기간 내 재생 이벤트 목록 */
+function playsBetween(a,b){
+  const out=[];
+  getHistory().forEach(h=>(h.times||[]).forEach(t=>{
+    if(t>=a&&t<b) out.push({ts:t,vid:h.vid,title:h.title,artist:h.artist,thumb:h.thumb,genre:h.genre||''});
+  }));
+  out.sort((x,y)=>x.ts-y.ts);
+  return out;
+}
+function domColor(plays){
+  if(!plays.length) return null;
+  const c={}; plays.forEach(p=>{ c[p.genre]=(c[p.genre]||0)+1; });
+  let best='',bn=-1; for(const k in c){ if(c[k]>bn){bn=c[k];best=k;} }
+  return colorFor(best);
+}
+function legendHtml(plays){
+  const set={}; plays.forEach(p=>{ set[p.genre||'']=1; });
+  const keys=Object.keys(set);
+  if(!keys.length) return '';
+  return '<div class="legend">'+keys.map(g=>'<span><i style="background:'+colorFor(g)+'"></i>'+(g?esc(g):'기타')+'</span>').join('')+'</div>';
+}
 function rankByPeriod(period){
-  const now=Date.now();
-  let since=0;
-  if(period==='week') since=now-7*24*3600*1000;
-  else if(period==='month') since=now-30*24*3600*1000;
+  const since=periodStart(period);
   const hist=getHistory();
   const arr=hist.map(h=>{
     const cnt=h.times.filter(t=>t>=since).length;
@@ -367,28 +433,111 @@ async function loadChart(){
 }
 
 /* ===== 내 순위 ===== */
+function calWeekHtml(){
+  const start=periodStart('week');
+  const today=new Date(); today.setHours(0,0,0,0);
+  const names=['월','화','수','목','금','토','일'];
+  let rows='';
+  for(let i=0;i<7;i++){
+    const d0=new Date(start+i*86400000);
+    const a=d0.getTime(), b=a+86400000;
+    const plays=playsBetween(a,b);
+    const isToday=a===today.getTime();
+    const future=a>today.getTime();
+    let chips;
+    if(plays.length) chips=plays.map(pl=>'<span class="gChip" style="background:'+colorFor(pl.genre)+'">'+esc(pl.title)+'</span>').join('');
+    else chips='<span class="wdNone">'+(future?'-':'없음')+'</span>';
+    rows+='<div class="weekDayRow"><div class="wdLabel'+(isToday?' today':'')+'">'+names[i]+' '+(d0.getMonth()+1)+'/'+d0.getDate()+'</div><div class="wdSongs">'+chips+'</div></div>';
+  }
+  const all=playsBetween(start,start+7*86400000);
+  return '<div class="calWrap"><div class="calHead">이번 주 들은 노래<span class="sub">월~일</span></div>'+rows+legendHtml(all)+'</div>';
+}
+function calMonthHtml(){
+  const now=new Date();
+  const y=now.getFullYear(), m=now.getMonth();
+  const first=new Date(y,m,1);
+  const lead=(first.getDay()+6)%7; // 월요일 시작
+  const days=new Date(y,m+1,0).getDate();
+  const today=new Date(); today.setHours(0,0,0,0);
+  let cells='<div class="calGrid">';
+  ['월','화','수','목','금','토','일'].forEach(n=>{ cells+='<div class="calDow">'+n+'</div>'; });
+  for(let i=0;i<lead;i++) cells+='<div class="calCell empty"></div>';
+  for(let d=1;d<=days;d++){
+    const a=new Date(y,m,d).getTime(), b=a+86400000;
+    const plays=playsBetween(a,b);
+    const col=domColor(plays);
+    const isToday=a===today.getTime();
+    cells+='<div class="calCell'+(col?' on':'')+(isToday?' today':'')+'" data-day="'+d+'"'+(col?' style="background:'+col+'"':'')+'>'+d+(plays.length?'<span class="cnt">'+plays.length+'</span>':'')+'</div>';
+  }
+  cells+='</div>';
+  const all=playsBetween(new Date(y,m,1).getTime(), new Date(y,m+1,1).getTime());
+  return '<div class="calWrap"><div class="calHead">'+(m+1)+'월 달력<span class="sub">날짜를 누르면 그날 들은 노래</span></div>'+cells+legendHtml(all)+'<div id="calDayList"></div></div>';
+}
+function calYearHtml(){
+  const y=new Date().getFullYear();
+  let cells='<div class="calGridY">';
+  for(let m=0;m<12;m++){
+    const a=new Date(y,m,1).getTime(), b=new Date(y,m+1,1).getTime();
+    const plays=playsBetween(a,b);
+    const col=domColor(plays);
+    cells+='<div class="calCellY'+(col?' on':'')+'"'+(col?' style="background:'+col+'"':'')+'>'+(m+1)+'월'+(plays.length?'<span class="cnt">'+plays.length+'곡</span>':'')+'</div>';
+  }
+  cells+='</div>';
+  const all=playsBetween(new Date(y,0,1).getTime(), new Date(y+1,0,1).getTime());
+  return '<div class="calWrap"><div class="calHead">'+y+'년<span class="sub">1~12월 · 색 = 가장 많이 들은 장르</span></div>'+cells+legendHtml(all)+'</div>';
+}
 function renderMyChart(){
   const c=$('content');
   const period=getMyPeriod();
   c.innerHTML=
     '<div class="segBar">'+
-      '<button class="segBtn '+(period==='all'?'active':'')+'" data-per="all">전체</button>'+
+      '<button class="segBtn '+(period==='year'?'active':'')+'" data-per="year">연간</button>'+
       '<button class="segBtn '+(period==='month'?'active':'')+'" data-per="month">월간</button>'+
       '<button class="segBtn '+(period==='week'?'active':'')+'" data-per="week">주간</button>'+
     '</div>'+
     '<div id="swipeHint">← 좌우로 밀어서 전환 →</div>'+
+    '<div id="calArea"></div>'+
     '<div id="myChartBody"></div>';
   c.querySelectorAll('.segBtn').forEach(b=>b.addEventListener('click',()=>{
     if(b.dataset.per===getMyPeriod())return;
     Store.set('myPeriod',b.dataset.per); renderMyChart();
   }));
+  // 달력 (버튼마다 다른 화면)
+  const cal=$('calArea');
+  if(period==='week') cal.innerHTML=calWeekHtml();
+  else if(period==='month') cal.innerHTML=calMonthHtml();
+  else cal.innerHTML=calYearHtml();
+  // 월간: 날짜 탭 -> 그날 들은 노래
+  if(period==='month'){
+    cal.querySelectorAll('.calCell[data-day]').forEach(cell=>cell.addEventListener('click',()=>{
+      const wasSel=cell.classList.contains('sel');
+      cal.querySelectorAll('.calCell.sel').forEach(x=>x.classList.remove('sel'));
+      const list=$('calDayList');
+      if(wasSel){ list.innerHTML=''; return; }
+      cell.classList.add('sel');
+      const now=new Date();
+      const a=new Date(now.getFullYear(),now.getMonth(),parseInt(cell.dataset.day,10)).getTime();
+      const plays=playsBetween(a,a+86400000);
+      if(!plays.length){ list.innerHTML='<div class="wdNone" style="padding:10px 2px 4px;">이날은 들은 노래가 없어요.</div>'; return; }
+      // 같은 곡 묶어서 횟수 표시
+      const uniq=[];
+      plays.forEach(pl=>{
+        let u=uniq.find(x=>x.vid===pl.vid);
+        if(!u){ u={...pl,count:0}; uniq.push(u); }
+        u.count++;
+      });
+      list.innerHTML='<div style="height:10px"></div>'+uniq.map((u,i)=>rowHtmlCount(i+1,u.vid,u.title,u.artist,u.thumb,u.count)).join('');
+    }));
+  }
+  // 순위 (기존 기능)
   const ranked=rankByPeriod(period);
   const body=$('myChartBody');
+  const perName=period==='year'?'연간':period==='month'?'월간':'주간';
   if(ranked.length===0){
-    body.innerHTML='<div class="emptyMsg"><div class="big">🏆</div>아직 기록이 없어요.<br>곡을 누르면 들은 만큼<br>여기 내 순위가 쌓여요.</div>';
+    body.innerHTML='<div class="emptyMsg"><div class="big">🏆</div>아직 기록이 없어요.<br>▶ 나  🎵 를 누르면 들은 만큼<br>여기 내 순위가 쌓여요.</div>';
     return;
   }
-  let html='';
+  let html='<div class="calSecT">'+perName+' 순위</div>';
   ranked.forEach((h,i)=>{
     if(i===0){
       const topImg=h.thumb?'<img class="ctImg" src="'+h.thumb+'" loading="lazy" style="aspect-ratio:1;object-fit:cover;max-height:220px">':'';
@@ -475,8 +624,10 @@ function renderSongList(){
   $('plModalList').innerHTML=html||'<div class="secError">곡을 찾지 못했어요.</div>';
   $('songSortBtn').innerHTML='<span class="si">↕</span>'+(mode==='artist'?'🎤 가수순':'원래순');
 }
+let curPlGenre='';
 async function openPlaylist(plid, title){
   $('pmTitle').textContent=title||'재생목록';
+  curPlGenre=genreFromTitle(title||''); // 이 목록에서 튼 곡의 장르
   $('pmOpen').dataset.plid=plid;
   $('plSortBar').style.display='none';
   curSongs=[];
@@ -515,6 +666,10 @@ function ctxPlid(el){
   if(currentTab==='chart') return CHART_PL[getRegion()]||'';
   return '';
 }
+function ctxGenre(el){
+  // 내 음악 재생목록 안에서 튼 곡만 장르를 알 수 있음
+  return (el && el.closest('#plModalList')) ? curPlGenre : '';
+}
 function fmtNum(n){
   n=parseInt(n||0,10);
   if(n>=100000000) return Math.floor(n/100000000)+'억회';
@@ -522,8 +677,8 @@ function fmtNum(n){
   return n.toLocaleString('ko')+'회';
 }
 let dtCur=null;
-async function openDetail(vid,title,artist,thumb,plid){
-  dtCur={vid,title,artist,thumb,plid};
+async function openDetail(vid,title,artist,thumb,plid,genre){
+  dtCur={vid,title,artist,thumb,plid,genre:genre||''};
   const head='<img class="dtImg" src="https://i.ytimg.com/vi/'+vid+'/hqdefault.jpg" onerror="this.style.display=\'none\'">'
     +'<div class="dtWrap"><div class="dtTitle">'+esc(title)+'</div><div class="dtArtist">'+esc(artist)+'</div>'
     +'<div class="dtActs"><button class="dtBtn yt" id="dtYT">▶ 유튜브</button><button class="dtBtn ym" id="dtYM">🎵 유튜브 뮤직</button></div>'
@@ -551,8 +706,8 @@ async function openDetail(vid,title,artist,thumb,plid){
 $('dtClose').addEventListener('click',()=>$('dtSheet').classList.remove('show'));
 $('dtBody').addEventListener('click',e=>{
   if(!dtCur) return;
-  if(e.target.closest('#dtYT')){ recordPlay(dtCur.vid,dtCur.title,dtCur.artist,dtCur.thumb); goYT(dtCur.vid,dtCur.plid); }
-  else if(e.target.closest('#dtYM')){ recordPlay(dtCur.vid,dtCur.title,dtCur.artist,dtCur.thumb); goYM(dtCur.vid); }
+  if(e.target.closest('#dtYT')){ recordPlay(dtCur.vid,dtCur.title,dtCur.artist,dtCur.thumb,dtCur.genre); goYT(dtCur.vid,dtCur.plid); }
+  else if(e.target.closest('#dtYM')){ recordPlay(dtCur.vid,dtCur.title,dtCur.artist,dtCur.thumb,dtCur.genre); goYM(dtCur.vid); }
 });
 
 document.addEventListener('click',e=>{
@@ -562,11 +717,11 @@ document.addEventListener('click',e=>{
   if(!row || !row.dataset.vid) return;
   const vid=row.dataset.vid, title=row.dataset.title||'', artist=row.dataset.artist||'', thumb=row.dataset.thumb||'';
   // ▶ 빨강 = 유튜브 (재생목록 이어재생)
-  if(e.target.closest('.bYT')){ recordPlay(vid,title,artist,thumb); goYT(vid, ctxPlid(row)); return; }
+  if(e.target.closest('.bYT')){ recordPlay(vid,title,artist,thumb,ctxGenre(row)); goYT(vid, ctxPlid(row)); return; }
   // 🎵 흰색 = 유튜브 뮤직 (한 곡)
-  if(e.target.closest('.bYM')){ recordPlay(vid,title,artist,thumb); goYM(vid); return; }
+  if(e.target.closest('.bYM')){ recordPlay(vid,title,artist,thumb,ctxGenre(row)); goYM(vid); return; }
   // 그 외 줄 탭 = 곡 상세 (앱 안에서 보기)
-  openDetail(vid,title,artist,thumb, ctxPlid(row));
+  openDetail(vid,title,artist,thumb, ctxPlid(row), ctxGenre(row));
 });
 $('pmOpen').addEventListener('click',()=>{ const plid=$('pmOpen').dataset.plid; if(plid)openPlaylistInMusic(plid); });
 $('plModalClose').addEventListener('click',()=>$('plModal').classList.remove('show'));
@@ -619,7 +774,7 @@ $('content').addEventListener('touchend',e=>{
     idx=(idx+dir+order.length)%order.length; // 순환
     Store.set('region',order[idx]); renderChart();
   } else if(currentTab==='mychart'){
-    const order=['all','month','week'];
+    const order=['year','month','week'];
     let idx=order.indexOf(getMyPeriod());
     idx=(idx+dir+order.length)%order.length; // 순환
     Store.set('myPeriod',order[idx]); renderMyChart();
