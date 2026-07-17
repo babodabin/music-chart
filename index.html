@@ -585,6 +585,18 @@ $('plModal').addEventListener('touchend',e=>{
   if(Math.abs(dx)<Math.abs(dy)*1.5) return;
   $('plModal').classList.remove('show');
 },{passive:true});
+// 곡 상세 시트도 동일하게 좌우 스와이프로 닫기
+let dTouchX=null, dTouchY=null;
+$('dtSheet').addEventListener('touchstart',e=>{ dTouchX=e.touches[0].clientX; dTouchY=e.touches[0].clientY; },{passive:true});
+$('dtSheet').addEventListener('touchend',e=>{
+  if(dTouchX===null)return;
+  const dx=e.changedTouches[0].clientX-dTouchX;
+  const dy=e.changedTouches[0].clientY-dTouchY;
+  dTouchX=null; dTouchY=null;
+  if(Math.abs(dx)<70) return;
+  if(Math.abs(dx)<Math.abs(dy)*1.5) return;
+  $('dtSheet').classList.remove('show');
+},{passive:true});
 /* 좌우 스와이프 — 순위(한국/미국) + 내 순위(전체/월간/주간) */
 let touchX=null, touchY=null;
 $('content').addEventListener('touchstart',e=>{
