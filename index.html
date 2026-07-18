@@ -627,18 +627,34 @@ async function renderPlaylistGrid(pls, label){
   }catch(err){ c.innerHTML=errorHtml(err); }
 }
 let curSongs=[]; // 현재 모달에 열린 곡들 (원래순)
-function getSongSort(){ return Store.get('songSort','orig'); }
+/* 정렬: 같은 버튼을 또 누르면 방향이 뒤집힘 (▼/▲) */
+function getSongSort(){
+  const v=Store.get('songSort','orig');
+  return typeof v==='string' ? {mode:v,desc:false} : v; // 예전 저장값 호환
+}
+function lastPlayedAt(vid){
+  const h=getHistory().find(x=>x.vid===vid);
+  return h&&h.times&&h.times.length ? h.times[h.times.length-1] : 0; // 0 = 들은 적 없음
+}
 function renderSongList(){
-  const mode=getSongSort();
+  const st=getSongSort();
   let arr=curSongs.slice();
-  if(mode==='artist') arr.sort((a,b)=>(a.artist||'').localeCompare(b.artist||'','ko'));
+  if(st.mode==='artist') arr.sort((a,b)=>(a.artist||'').localeCompare(b.artist||'','ko'));
+  else if(st.mode==='played') arr.sort((a,b)=>lastPlayedAt(b.vid)-lastPlayedAt(a.vid)); // 최근 들은 순
+  if(st.desc) arr.reverse();
   let html='';
   arr.forEach((s,i)=>{
     // rowHtml에 data-pos(원래 재생목록 위치) 주입
     html+=rowHtml(i+1,s.vid,s.title,s.artist,s.thumb).replace('class="rankRow"','class="rankRow" data-pos="'+s.pos+'"');
   });
   $('plModalList').innerHTML=html||'<div class="secError">곡을 찾지 못했어요.</div>';
-  $('songSortBtn').innerHTML='<span class="si">↕</span>'+(mode==='artist'?'🎤 가수순':'원래순');
+  // 버튼 표시: 모드 이름 + 현재 방향 설명
+  const names={
+    orig:  st.desc?'원래순 ▲ 늦게 추가':'원래순 ▼ 먼저 추가',
+    artist:st.desc?'🎤 가수순 ▲ ㅎ→ㄱ':'🎤 가수순 ▼ ㄱ→ㅎ',
+    played:st.desc?'🎧 들은순 ▲ 안 들은 곡부터':'🎧 들은순 ▼ 최근 들은 곡부터'
+  };
+  $('songSortBtn').innerHTML='<span class="si">↕</span>'+names[st.mode];
 }
 let curPlGenre='';
 async function openPlaylist(plid, title){
@@ -742,7 +758,15 @@ document.addEventListener('click',e=>{
 $('pmOpen').addEventListener('click',()=>{ const plid=$('pmOpen').dataset.plid; if(plid)openPlaylistInMusic(plid); });
 $('plModalClose').addEventListener('click',()=>$('plModal').classList.remove('show'));
 $('songSortBtn').addEventListener('click',()=>{
-  Store.set('songSort', getSongSort()==='orig'?'artist':'orig'); renderSongList();
+  // 탭할 때마다: 방향 뒤집기 -> 다음 정렬로 (원래▼→원래▲→가수▼→가수▲→들은▼→들은▲→원래▼…)
+  const st=getSongSort();
+  let next;
+  if(!st.desc) next={mode:st.mode,desc:true};
+  else{
+    const order=['orig','artist','played'];
+    next={mode:order[(order.indexOf(st.mode)+1)%order.length],desc:false};
+  }
+  Store.set('songSort', next); renderSongList();
 });
 // 모달 좌우 스와이프로 닫기 (세로 스크롤 오인 방지 게이트 적용)
 let mTouchX=null, mTouchY=null;
