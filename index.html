@@ -577,26 +577,25 @@ function rowHtmlCount(n,vid,title,artist,thumb,count){
 }
 
 /* ===== 재생목록 카드 ===== */
-function getGridSort(){ return Store.get('gridSort','added'); }
-function sortGridItems(items, pls, mode){
-  // pls: 저장 배열(추가순서/addedAt 보유), items: API 결과
-  const order={}; // plid -> 추가 인덱스/시각
-  pls.forEach((p,idx)=>{ const id=extractPlaylistId(p.url); if(id) order[id]={idx, at:p.addedAt||0}; });
+function getGridSort(){
+  const v=Store.get('gridSort',{mode:'name',desc:false});
+  return typeof v==='string' ? {mode:'name',desc:false} : v; // 예전 저장값(추가순 등)은 이름순으로
+}
+/* 폴더를 마지막으로 연 시간 (들은순 기준) */
+function plUsedAt(plid){ const u=Store.get('plUsed',{}); return u[plid]||0; }
+function markPlUsed(plid){ const u=Store.get('plUsed',{}); u[plid]=Date.now(); Store.set('plUsed',u); }
+function sortGridItems(items, pls, st){
   const arr=items.slice();
-  if(mode==='name'){
-    arr.sort((a,b)=>(a.snippet.title||'').localeCompare(b.snippet.title||'','ko'));
-  } else if(mode==='count'){
-    arr.sort((a,b)=>((b.contentDetails?b.contentDetails.itemCount:0)||0)-((a.contentDetails?a.contentDetails.itemCount:0)||0));
-  } else { // added: addedAt 우선, 없으면 저장 배열 순서
-    arr.sort((a,b)=>{
-      const oa=order[a.id]||{idx:9999,at:0}, ob=order[b.id]||{idx:9999,at:0};
-      if(oa.at||ob.at) return oa.at-ob.at;
-      return oa.idx-ob.idx;
-    });
-  }
+  if(st.mode==='used') arr.sort((a,b)=>plUsedAt(b.id)-plUsedAt(a.id)); // 최근 들은 폴더부터
+  else arr.sort((a,b)=>(a.snippet.title||'').localeCompare(b.snippet.title||'','ko')); // 이름순 ㄱ→ㅎ
+  if(st.desc) arr.reverse();
   return arr;
 }
-const GRID_SORT_LABEL={added:'➕ 추가순', name:'🔤 이름순', count:'🎵 곡수순'};
+function gridSortLabel(st){
+  return st.mode==='used'
+    ? (st.desc?'🎧 들은순 ▲ 안 들은 폴더부터':'🎧 들은순 ▼ 최근 들은 폴더부터')
+    : (st.desc?'🔤 이름순 ▲ ㅎ→ㄱ':'🔤 이름순 ▼ ㄱ→ㅎ');
+}
 async function renderPlaylistGrid(pls, label){
   const c=$('content');
   if(!pls || pls.length===0){ c.innerHTML='<div class="emptyMsg"><div class="big">📂</div>'+label+'에 재생목록이 없어요.<br><b style="color:var(--red)">⚙ 설정</b>에서 링크를 추가하세요.</div>'; return; }
@@ -608,7 +607,7 @@ async function renderPlaylistGrid(pls, label){
     const items=data.items||[];
     if(items.length===0){ c.innerHTML='<div class="secError">재생목록을 찾지 못했어요. (비공개이거나 자동 생성 목록일 수 있어요)</div>'; return; }
     const sorted=sortGridItems(items, pls, getGridSort());
-    let html='<div class="sortBar"><button class="sortBtn" id="gridSortBtn"><span class="si">↕</span>'+GRID_SORT_LABEL[getGridSort()]+'</button></div>';
+    let html='<div class="sortBar"><button class="sortBtn" id="gridSortBtn"><span class="si">↕</span>'+gridSortLabel(getGridSort())+'</button></div>';
     html+='<div class="plGrid">';
     sorted.forEach(it=>{
       const sn=it.snippet;
@@ -620,9 +619,12 @@ async function renderPlaylistGrid(pls, label){
     c.innerHTML=html;
     const btn=$('gridSortBtn');
     if(btn) btn.addEventListener('click',()=>{
-      const order=['added','name','count'];
-      let i=(order.indexOf(getGridSort())+1)%order.length;
-      Store.set('gridSort',order[i]); renderTab();
+      // 이름순▼ -> 이름순▲ -> 들은순▼ -> 들은순▲ -> 이름순▼ …
+      const st=getGridSort();
+      let next;
+      if(!st.desc) next={mode:st.mode,desc:true};
+      else next={mode:st.mode==='name'?'used':'name',desc:false};
+      Store.set('gridSort',next); renderTab();
     });
   }catch(err){ c.innerHTML=errorHtml(err); }
 }
@@ -660,6 +662,7 @@ let curPlGenre='';
 async function openPlaylist(plid, title){
   $('pmTitle').textContent=title||'재생목록';
   curPlGenre=genreFromTitle(title||''); // 이 목록에서 튼 곡의 장르
+  markPlUsed(plid); // 들은순 정렬용: 이 폴더를 연 시간 기록
   $('pmOpen').dataset.plid=plid;
   $('plSortBar').style.display='none';
   curSongs=[];
