@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>마이 뮤직</title>
 <meta name="theme-color" content="#0a0a0a">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="마이뮤직">
@@ -60,14 +61,16 @@
   .rankTitle{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .rankArtist{font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
   .rankCount{flex:0 0 auto;font-size:11px;color:var(--dim2);background:var(--bg2);padding:3px 8px;border-radius:10px;}
-  /* 재생 버튼 2종 — 빨강 원=유튜브 / 흰 원=유튜브 뮤직 */
-  .btnPair{flex:0 0 auto;display:flex;align-items:center;gap:7px;}
-  .bYT,.bYM{width:34px;height:34px;border-radius:50%;border:none;
+  /* 재생 버튼 3종 — 유튜브 / 유튜브 뮤직 / 이 화면에서 재생 */
+  .btnPair{flex:0 0 auto;display:flex;align-items:center;gap:5px;}
+  .bYT,.bYM,.bIN{width:34px;height:34px;border-radius:50%;border:none;
     display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
   .bYT{background:var(--red);color:#fff;font-size:13px;padding-left:2px;}
   .bYT:active{background:var(--reddim);transform:scale(.9);}
   .bYM{background:#fff;font-size:16px;box-shadow:0 0 0 2px rgba(255,255,255,.18);}
   .bYM:active{transform:scale(.9);}
+  .bIN{background:var(--bg3);color:#fff;border:1.5px solid var(--red);font-size:15px;}
+  .bIN:active{background:var(--red);transform:scale(.9);}
   /* 곡 상세 시트 */
   #dtSheet{position:fixed;inset:0;z-index:45;background:var(--bg);display:none;flex-direction:column;
     padding-top:env(safe-area-inset-top);}
@@ -82,14 +85,33 @@
   .dtArtist{font-size:14px;color:var(--dim);margin-top:5px;}
   .dtMeta{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;}
   .dtChip{font-size:11px;color:var(--dim);background:var(--bg2);padding:5px 10px;border-radius:9px;}
-  .dtActs{display:flex;gap:10px;margin-top:16px;}
-  .dtBtn{flex:1;border:none;border-radius:12px;font-size:14px;font-weight:700;padding:14px 0;
-    display:flex;align-items:center;justify-content:center;gap:7px;}
+  .dtActs{display:flex;gap:7px;margin-top:16px;}
+  .dtBtn{flex:1;border:none;border-radius:12px;font-size:13px;font-weight:700;padding:13px 4px;
+    display:flex;align-items:center;justify-content:center;gap:5px;}
   .dtBtn.yt{background:var(--red);color:#fff;}
   .dtBtn.yt:active{background:var(--reddim);}
   .dtBtn.ym{background:#fff;color:#111;}
   .dtBtn.ym:active{background:#ddd;}
+  .dtBtn.inside{background:var(--bg3);color:#fff;border:1px solid var(--red);}
+  .dtBtn.inside:active{background:var(--red);}
   .dtDescT{font-size:12px;color:var(--dim2);font-weight:700;margin:22px 0 7px;}
+  /* 화면 안 재생용 YouTube 플레이어 */
+  #inPlayer{position:fixed;z-index:48;left:50%;bottom:calc(env(safe-area-inset-bottom) + 10px);
+    width:min(calc(100vw - 20px),520px);transform:translate(-50%,calc(100% + 30px));
+    background:#111;border:1px solid var(--line);border-radius:16px;overflow:hidden;
+    box-shadow:0 14px 42px rgba(0,0,0,.65);opacity:0;pointer-events:none;
+    transition:transform .25s ease,opacity .2s ease;}
+  #inPlayer.show{transform:translate(-50%,0);opacity:1;pointer-events:auto;}
+  #inPlayerHead{height:48px;display:flex;align-items:center;gap:10px;padding:7px 8px 7px 13px;
+    background:var(--bg2);border-bottom:1px solid var(--line);}
+  #inPlayerText{flex:1;min-width:0;}
+  #inPlayerTitle{font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #inPlayerArtist{font-size:11px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+  #inPlayerClose{flex:0 0 34px;width:34px;height:34px;border:none;border-radius:50%;
+    background:var(--bg3);color:#fff;font-size:22px;line-height:1;}
+  #inPlayerClose:active{background:var(--red);}
+  #inPlayerFrameWrap{width:100%;height:clamp(200px,56.25vw,270px);background:#000;}
+  #inPlayerFrame{display:block;width:100%;height:100%;border:0;}
   /* 달력 전체화면 시트 */
   #calSheet{position:fixed;inset:0;z-index:44;background:var(--bg);display:none;flex-direction:column;
     padding-top:env(safe-area-inset-top);}
@@ -246,6 +268,20 @@
       <button class="setBtn" id="importBtn" style="margin-top:10px;">📥 가져오기 (복원)</button>
 
       <button class="setBtn sec" id="reloadBtn" style="margin-top:22px;">변경사항 적용</button>
+    </div>
+  </div>
+  <div id="inPlayer" aria-hidden="true">
+    <div id="inPlayerHead">
+      <div id="inPlayerText">
+        <div id="inPlayerTitle">재생 중</div>
+        <div id="inPlayerArtist"></div>
+      </div>
+      <button id="inPlayerClose" title="재생 닫기" aria-label="재생 닫기">×</button>
+    </div>
+    <div id="inPlayerFrameWrap">
+      <iframe id="inPlayerFrame" title="YouTube 내부 재생" src="about:blank"
+        allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen
+        referrerpolicy="strict-origin-when-cross-origin"></iframe>
     </div>
   </div>
   <div id="toast"></div>
@@ -565,9 +601,9 @@ function renderMyChart(){
   body.innerHTML=html;
 }
 
-/* 빨강 원 ▶ = 유튜브 / 흰 원 🎵 = 유튜브 뮤직 */
+/* 빨강 ▶ = 유튜브 / 흰색 🎵 = 유튜브 뮤직 / 테두리 ▣ = 이 화면에서 재생 */
 function btnPairHtml(){
-  return '<div class="btnPair"><button class="bYT" title="유튜브에서 재생">▶</button><button class="bYM" title="유튜브 뮤직에서 재생">🎵</button></div>';
+  return '<div class="btnPair"><button class="bYT" title="유튜브에서 재생">▶</button><button class="bYM" title="유튜브 뮤직에서 재생">🎵</button><button class="bIN" title="이 화면에서 재생">▣</button></div>';
 }
 function rowHtml(n,vid,title,artist,thumb){
   return '<div class="rankRow" data-vid="'+vid+'" data-title="'+esc(title)+'" data-artist="'+esc(artist)+'" data-thumb="'+(thumb||'')+'"><div class="rankNum'+(n<=3?' top':'')+'">'+n+'</div><img class="rankThumb" src="'+(thumb||'')+'" loading="lazy"><div class="rankInfo"><div class="rankTitle">'+esc(title)+'</div><div class="rankArtist">'+esc(artist)+'</div></div>'+btnPairHtml()+'</div>';
@@ -696,6 +732,22 @@ function openPlaylistInMusic(plid){ window.location.href='https://www.youtube.co
 /* ===== 곡 상세 시트 ===== */
 function goYT(vid,plid){ let u='https://www.youtube.com/watch?v='+vid; if(plid)u+='&list='+plid; window.location.href=u; }
 function goYM(vid){ window.location.href='https://music.youtube.com/watch?v='+vid; }
+function playInside(vid,title,artist,plid){
+  if(!vid)return;
+  const params=['autoplay=1','playsinline=1','rel=0'];
+  if(plid){ params.push('listType=playlist','list='+encodeURIComponent(plid)); }
+  $('inPlayerTitle').textContent=title||'재생 중';
+  $('inPlayerArtist').textContent=artist||'';
+  $('inPlayerFrame').src='https://www.youtube.com/embed/'+encodeURIComponent(vid)+'?'+params.join('&');
+  $('inPlayer').classList.add('show');
+  $('inPlayer').setAttribute('aria-hidden','false');
+}
+function closeInsidePlayer(){
+  $('inPlayer').classList.remove('show');
+  $('inPlayer').setAttribute('aria-hidden','true');
+  $('inPlayerFrame').src='about:blank'; // 닫으면 재생도 정지
+}
+$('inPlayerClose').addEventListener('click',closeInsidePlayer);
 function ctxPlid(el){
   if(el && el.closest('#plModalList')) return $('pmOpen').dataset.plid||'';
   if(currentTab==='chart') return CHART_PL[getRegion()]||'';
@@ -716,7 +768,7 @@ async function openDetail(vid,title,artist,thumb,plid,genre){
   dtCur={vid,title,artist,thumb,plid,genre:genre||''};
   const head='<img class="dtImg" src="https://i.ytimg.com/vi/'+vid+'/hqdefault.jpg" onerror="this.style.display=\'none\'">'
     +'<div class="dtWrap"><div class="dtTitle">'+esc(title)+'</div><div class="dtArtist">'+esc(artist)+'</div>'
-    +'<div class="dtActs"><button class="dtBtn yt" id="dtYT">▶ 유튜브</button><button class="dtBtn ym" id="dtYM">🎵 유튜브 뮤직</button></div>'
+    +'<div class="dtActs"><button class="dtBtn yt" id="dtYT">▶ 유튜브</button><button class="dtBtn ym" id="dtYM">🎵 유튜브 뮤직</button><button class="dtBtn inside" id="dtIN">▣ 이 화면</button></div>'
     +'<div id="dtExtra"><div class="dtDescT">정보 불러오는 중…</div></div></div>';
   $('dtBody').innerHTML=head;
   $('dtBody').scrollTop=0;
@@ -743,6 +795,7 @@ $('dtBody').addEventListener('click',e=>{
   if(!dtCur) return;
   if(e.target.closest('#dtYT')){ recordPlay(dtCur.vid,dtCur.title,dtCur.artist,dtCur.thumb,dtCur.genre); goYT(dtCur.vid,dtCur.plid); }
   else if(e.target.closest('#dtYM')){ recordPlay(dtCur.vid,dtCur.title,dtCur.artist,dtCur.thumb,dtCur.genre); goYM(dtCur.vid); }
+  else if(e.target.closest('#dtIN')){ recordPlay(dtCur.vid,dtCur.title,dtCur.artist,dtCur.thumb,dtCur.genre); playInside(dtCur.vid,dtCur.title,dtCur.artist,dtCur.plid); }
 });
 
 document.addEventListener('click',e=>{
@@ -755,6 +808,8 @@ document.addEventListener('click',e=>{
   if(e.target.closest('.bYT')){ recordPlay(vid,title,artist,thumb,ctxGenre(row)); goYT(vid, ctxPlid(row)); return; }
   // 🎵 흰색 = 유튜브 뮤직 (한 곡)
   if(e.target.closest('.bYM')){ recordPlay(vid,title,artist,thumb,ctxGenre(row)); goYM(vid); return; }
+  // ▣ 테두리 = 현재 화면 안에서 재생
+  if(e.target.closest('.bIN')){ recordPlay(vid,title,artist,thumb,ctxGenre(row)); playInside(vid,title,artist,ctxPlid(row)); return; }
   // 그 외 줄 탭 = 곡 상세 (앱 안에서 보기)
   openDetail(vid,title,artist,thumb, ctxPlid(row), ctxGenre(row));
 });
