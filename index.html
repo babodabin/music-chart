@@ -33,7 +33,9 @@
     color:var(--txt);font-size:18px;display:flex;align-items:center;justify-content:center;}
   .iconBtn:active{background:var(--bg3);}
   /* 제목 버튼 — 누르면 메뉴가 펼쳐짐 */
-  #titleBtn{border:none;background:none;color:var(--txt);display:flex;align-items:center;gap:6px;padding:0;}
+  #titleBtn{border:none;background:none;color:var(--txt);display:flex;align-items:center;gap:9px;padding:8px 18px 8px 4px;margin:-8px 0 -8px -4px;min-height:52px;border-radius:14px;}
+  #titleBtn:active{background:var(--bg2);}
+  #titleBtn .tIcon{width:34px;height:34px;border-radius:9px;display:block;flex:0 0 auto;}
   #titleBtn .arw{font-size:14px;color:var(--dim);transition:transform .25s;}
   #titleBtn.open .arw{transform:rotate(180deg);}
   #menuDrop{flex:0 0 auto;margin:0 14px;background:var(--bg2);border-radius:14px;overflow:hidden;
@@ -133,7 +135,8 @@
   .calCell.on{color:#fff;font-weight:700;}
   .calCell.empty{background:none;}
   .calCell.today{box-shadow:0 0 0 1.5px var(--red) inset;}
-  .calCell.sel{box-shadow:0 0 0 2px #fff inset;}
+  .calCell.sel,.calCellY.sel{box-shadow:0 0 0 2px #fff inset;}
+  .weekDayRow.sel{background:var(--bg2);border-radius:8px;}
   .calCell .cnt{font-size:8px;font-weight:700;opacity:.9;}
   .calGridY{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
   .calCellY{aspect-ratio:1.5;border-radius:9px;background:var(--bg3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;color:var(--dim);}
@@ -153,9 +156,10 @@
   .dtDesc{font-size:13px;color:var(--dim);line-height:1.65;white-space:pre-wrap;word-break:break-word;
     background:var(--bg2);border-radius:12px;padding:13px 14px;user-select:text;-webkit-user-select:text;}
   .plGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:8px 16px;}
-  .sortBar{display:flex;justify-content:flex-end;padding:6px 16px 0;}
-  .sortBtn{background:var(--bg2);border:none;color:var(--dim);font-size:12px;font-weight:600;padding:6px 12px;border-radius:8px;display:inline-flex;align-items:center;gap:5px;}
+  .sortBar{display:flex;gap:6px;padding:6px 16px 0;}
+  .sortBtn{flex:1 1 0;justify-content:center;white-space:nowrap;background:var(--bg2);border:none;color:var(--dim);font-size:12px;font-weight:600;padding:9px 4px;border-radius:9px;display:inline-flex;align-items:center;gap:5px;}
   .sortBtn .si{font-size:13px;}
+  .sortBtn.on{background:rgba(240,96,154,.22);color:#fff;box-shadow:0 0 0 1px rgba(240,96,154,.55) inset;}
   .plCard .pcImg{width:100%;aspect-ratio:1;border-radius:12px;object-fit:cover;background:var(--bg3);
     display:flex;align-items:center;justify-content:center;font-size:40px;}
   .plCard .pcTitle{font-size:14px;font-weight:600;margin-top:8px;line-height:1.3;
@@ -209,7 +213,7 @@
 </head>
 <body>
   <div id="header">
-    <button id="titleBtn" aria-expanded="false"><h1>마이 <span>뮤직</span></h1><span class="arw">▾</span></button>
+    <button id="titleBtn" aria-expanded="false"><img class="tIcon" src="mymusic-180.png?v=2" alt=""><h1>마이 <span>뮤직</span></h1><span class="arw">▾</span></button>
     <div id="headBtns">
       <button class="iconBtn" id="setBtn" title="설정">⚙</button>
     </div>
@@ -235,7 +239,7 @@
       <span class="pmTitle" id="pmTitle">재생목록</span>
       <button class="pmOpen" id="pmOpen">📃 재생목록</button>
     </div>
-    <div id="plSortBar" class="sortBar" style="display:none;"><button class="sortBtn" id="songSortBtn"><span class="si">↕</span>원래순</button></div>
+    <div id="plSortBar" class="sortBar" style="display:none;"></div>
     <div id="plModalList"></div>
   </div>
   <div id="dtSheet">
@@ -623,10 +627,10 @@ function calWeekHtml(){
     let chips;
     if(plays.length) chips=plays.map(pl=>'<span class="gChip" style="background:'+colorFor(pl.genre)+'">'+esc(pl.title)+'</span>').join('');
     else chips='<span class="wdNone">'+(future?'-':'없음')+'</span>';
-    rows+='<div class="weekDayRow"><div class="wdLabel'+(isToday?' today':'')+'">'+names[i]+' '+(d0.getMonth()+1)+'/'+d0.getDate()+'</div><div class="wdSongs">'+chips+'</div></div>';
+    rows+='<div class="weekDayRow" data-a="'+a+'" data-b="'+b+'"><div class="wdLabel'+(isToday?' today':'')+'">'+names[i]+' '+(d0.getMonth()+1)+'/'+d0.getDate()+'</div><div class="wdSongs">'+chips+'</div></div>';
   }
   const all=playsBetween(start,start+7*86400000);
-  return '<div class="calWrap"><div class="calHead">이번 주 들은 노래<span class="sub">월~일</span></div>'+rows+legendHtml(all)+'</div>';
+  return '<div class="calWrap"><div class="calHead">이번 주 들은 노래<span class="sub">요일을 누르면 그날 들은 노래</span></div>'+rows+legendHtml(all)+'<div id="calDayList"></div></div>';
 }
 function calMonthHtml(){
   const now=new Date();
@@ -656,11 +660,11 @@ function calYearHtml(){
     const a=new Date(y,m,1).getTime(), b=new Date(y,m+1,1).getTime();
     const plays=playsBetween(a,b);
     const col=domColor(plays);
-    cells+='<div class="calCellY'+(col?' on':'')+'"'+(col?' style="background:'+col+'"':'')+'>'+(m+1)+'월'+(plays.length?'<span class="cnt">'+plays.length+'곡</span>':'')+'</div>';
+    cells+='<div class="calCellY'+(col?' on':'')+'" data-a="'+a+'" data-b="'+b+'"'+(col?' style="background:'+col+'"':'')+'>'+(m+1)+'월'+(plays.length?'<span class="cnt">'+plays.length+'곡</span>':'')+'</div>';
   }
   cells+='</div>';
   const all=playsBetween(new Date(y,0,1).getTime(), new Date(y+1,0,1).getTime());
-  return '<div class="calWrap"><div class="calHead">'+y+'년<span class="sub">1~12월 · 색 = 가장 많이 들은 장르</span></div>'+cells+legendHtml(all)+'</div>';
+  return '<div class="calWrap"><div class="calHead">'+y+'년<span class="sub">달을 누르면 그달 들은 노래</span></div>'+cells+legendHtml(all)+'<div id="calDayList"></div></div>';
 }
 /* 달력 화면 (전체화면 시트, 좌우 슬라이드로 복귀) */
 function openCalSheet(period){
@@ -693,21 +697,27 @@ function openCalSheet(period){
   $('calSheet').classList.add('show');
 }
 function getMyView(){ return Store.get('myView','rank'); } // rank=순위, cal=달력
-/* 월간 달력: 날짜 누르면 그날 들은 노래 */
-function bindMonthCells(box){
-  box.querySelectorAll('.calCell[data-day]').forEach(cell=>cell.addEventListener('click',()=>{
+/* 달력 누르기: 월간=날짜, 주간=요일, 연간=달 → 그 기간에 들은 노래 (많이 들은 순) */
+function showPlaysList(a,b,emptyMsg){
+  const list=$('calDayList'); if(!list) return;
+  const plays=playsBetween(a,b);
+  if(!plays.length){ list.innerHTML='<div class="wdNone" style="padding:10px 2px 4px;">'+emptyMsg+'</div>'; return; }
+  const uniq=[];
+  plays.forEach(pl=>{ let u=uniq.find(x=>x.vid===pl.vid); if(!u){ u={...pl,count:0}; uniq.push(u); } u.count++; });
+  uniq.sort((x,y)=>y.count-x.count);
+  list.innerHTML='<div style="height:10px"></div>'+uniq.map((u,i)=>rowHtmlCount(i+1,u.vid,u.title,u.artist,u.thumb,u.count)).join('');
+}
+function bindCalTaps(box,period){
+  const sel=period==='week'?'.weekDayRow':period==='year'?'.calCellY':'.calCell[data-day]';
+  box.querySelectorAll(sel).forEach(cell=>cell.addEventListener('click',()=>{
     const wasSel=cell.classList.contains('sel');
-    box.querySelectorAll('.calCell.sel').forEach(x=>x.classList.remove('sel'));
-    const list=$('calDayList');
-    if(wasSel){ list.innerHTML=''; return; }
+    box.querySelectorAll(sel+'.sel').forEach(x=>x.classList.remove('sel'));
+    if(wasSel){ $('calDayList').innerHTML=''; return; }
     cell.classList.add('sel');
-    const now=new Date();
-    const a=new Date(now.getFullYear(),now.getMonth(),parseInt(cell.dataset.day,10)).getTime();
-    const plays=playsBetween(a,a+86400000);
-    if(!plays.length){ list.innerHTML='<div class="wdNone" style="padding:10px 2px 4px;">이날은 들은 노래가 없어요.</div>'; return; }
-    const uniq=[];
-    plays.forEach(pl=>{ let u=uniq.find(x=>x.vid===pl.vid); if(!u){ u={...pl,count:0}; uniq.push(u); } u.count++; });
-    list.innerHTML='<div style="height:10px"></div>'+uniq.map((u,i)=>rowHtmlCount(i+1,u.vid,u.title,u.artist,u.thumb,u.count)).join('');
+    let a,b;
+    if(period==='month'){ const now=new Date(); a=new Date(now.getFullYear(),now.getMonth(),parseInt(cell.dataset.day,10)).getTime(); b=a+86400000; }
+    else { a=+cell.dataset.a; b=+cell.dataset.b; }
+    showPlaysList(a,b,period==='year'?'이달은 들은 노래가 없어요.':'이날은 들은 노래가 없어요.');
   }));
 }
 function renderMyChart(){
@@ -738,7 +748,7 @@ function renderMyChart(){
   // 달력 보기
   if(view==='cal'){
     body.innerHTML=period==='week'?calWeekHtml():period==='month'?calMonthHtml():calYearHtml();
-    if(period==='month') bindMonthCells(body);
+    bindCalTaps(body,period);
     return;
   }
   // 순위 보기
@@ -771,25 +781,35 @@ function rowHtmlCount(n,vid,title,artist,thumb,count){
   return '<div class="rankRow" data-vid="'+vid+'" data-title="'+esc(title)+'" data-artist="'+esc(artist)+'" data-thumb="'+(thumb||'')+'"><div class="rankNum'+(n<=3?' top':'')+'">'+n+'</div><img class="rankThumb" src="'+(thumb||'')+'" loading="lazy"><div class="rankInfo"><div class="rankTitle">'+esc(title)+'</div><div class="rankArtist">'+esc(artist)+'</div></div><span class="rankCount">'+count+'회</span>'+btnPairHtml()+'</div>';
 }
 
+/* ===== 정렬 버튼 3개: 🎧 최근 들은 / 🆕 최근 추가 / 🔤 이름 — 같은 버튼 또 누르면 반대로 ===== */
+const SORT_LABELS={
+  played:['🎧 최근 들은','🎧 오래전 들은'],
+  added: ['🆕 최근 추가','🆕 먼저 추가'],
+  name:  ['🔤 이름 ㄱ→ㅎ','🔤 이름 ㅎ→ㄱ']
+};
+function sortBarHtml(st){
+  return ['played','added','name'].map(m=>'<button class="sortBtn'+(st.mode===m?' on':'')+'" data-sort="'+m+'">'+SORT_LABELS[m][st.mode===m&&st.desc?1:0]+'</button>').join('');
+}
+function nextSort(st,m){ return st.mode===m ? {mode:m,desc:!st.desc} : {mode:m,desc:false}; }
+
 /* ===== 재생목록 카드 ===== */
 function getGridSort(){
   const v=Store.get('gridSort',{mode:'name',desc:false});
-  return typeof v==='string' ? {mode:'name',desc:false} : v; // 예전 저장값(추가순 등)은 이름순으로
+  if(typeof v==='string') return {mode:'name',desc:false};
+  if(v.mode==='used') return {mode:'played',desc:v.desc}; // 예전 '들은순' 저장값
+  return v;
 }
 /* 폴더를 마지막으로 연 시간 (들은순 기준) */
 function plUsedAt(plid){ const u=Store.get('plUsed',{}); return u[plid]||0; }
 function markPlUsed(plid){ const u=Store.get('plUsed',{}); u[plid]=Date.now(); Store.set('plUsed',u); }
 function sortGridItems(items, pls, st){
   const arr=items.slice();
-  if(st.mode==='used') arr.sort((a,b)=>plUsedAt(b.id)-plUsedAt(a.id)); // 최근 들은 폴더부터
-  else arr.sort((a,b)=>(a.snippet.title||'').localeCompare(b.snippet.title||'','ko')); // 이름순 ㄱ→ㅎ
+  const order=pls.map(p=>extractPlaylistId(p.url)); // 설정에 추가한 순서 (뒤일수록 최근 추가)
+  if(st.mode==='played') arr.sort((a,b)=>plUsedAt(b.id)-plUsedAt(a.id));            // 최근 연 폴더부터
+  else if(st.mode==='added') arr.sort((a,b)=>order.indexOf(b.id)-order.indexOf(a.id)); // 최근 추가부터
+  else arr.sort((a,b)=>(a.snippet.title||'').localeCompare(b.snippet.title||'','ko')); // 이름 ㄱ→ㅎ
   if(st.desc) arr.reverse();
   return arr;
-}
-function gridSortLabel(st){
-  return st.mode==='used'
-    ? (st.desc?'🎧 들은순 ▲ 안 들은 폴더부터':'🎧 들은순 ▼ 최근 들은 폴더부터')
-    : (st.desc?'🔤 이름순 ▲ ㅎ→ㄱ':'🔤 이름순 ▼ ㄱ→ㅎ');
 }
 async function renderPlaylistGrid(pls, label){
   const c=$('content');
@@ -802,7 +822,7 @@ async function renderPlaylistGrid(pls, label){
     const items=data.items||[];
     if(items.length===0){ c.innerHTML='<div class="secError">재생목록을 찾지 못했어요. (비공개이거나 자동 생성 목록일 수 있어요)</div>'; return; }
     const sorted=sortGridItems(items, pls, getGridSort());
-    let html='<div class="sortBar"><button class="sortBtn" id="gridSortBtn"><span class="si">↕</span>'+gridSortLabel(getGridSort())+'</button></div>';
+    let html='<div class="sortBar" id="gridSortBar">'+sortBarHtml(getGridSort())+'</div>';
     html+='<div class="plGrid">';
     sorted.forEach(it=>{
       const sn=it.snippet;
@@ -812,22 +832,21 @@ async function renderPlaylistGrid(pls, label){
     });
     html+='</div>';
     c.innerHTML=html;
-    const btn=$('gridSortBtn');
-    if(btn) btn.addEventListener('click',()=>{
-      // 이름순▼ -> 이름순▲ -> 들은순▼ -> 들은순▲ -> 이름순▼ …
-      const st=getGridSort();
-      let next;
-      if(!st.desc) next={mode:st.mode,desc:true};
-      else next={mode:st.mode==='name'?'used':'name',desc:false};
-      Store.set('gridSort',next); renderTab();
+    $('gridSortBar').addEventListener('click',e=>{
+      const b=e.target.closest('.sortBtn'); if(!b) return;
+      Store.set('gridSort',nextSort(getGridSort(),b.dataset.sort)); renderTab();
     });
   }catch(err){ c.innerHTML=errorHtml(err); }
 }
 let curSongs=[]; // 현재 모달에 열린 곡들 (원래순)
 /* 정렬: 같은 버튼을 또 누르면 방향이 뒤집힘 (▼/▲) */
 function getSongSort(){
-  const v=Store.get('songSort','orig');
-  return typeof v==='string' ? {mode:v,desc:false} : v; // 예전 저장값 호환
+  let v=Store.get('songSort',{mode:'added',desc:false});
+  if(typeof v==='string') v={mode:v,desc:false};
+  // 예전 저장값 호환: 원래순(먼저 추가부터)=최근 추가의 반대, 가수순=이름
+  if(v.mode==='orig') return {mode:'added',desc:!v.desc};
+  if(v.mode==='artist') return {mode:'name',desc:v.desc};
+  return v;
 }
 function lastPlayedAt(vid){
   const h=getHistory().find(x=>x.vid===vid);
@@ -836,8 +855,9 @@ function lastPlayedAt(vid){
 function renderSongList(){
   const st=getSongSort();
   let arr=curSongs.slice();
-  if(st.mode==='artist') arr.sort((a,b)=>(a.artist||'').localeCompare(b.artist||'','ko'));
-  else if(st.mode==='played') arr.sort((a,b)=>lastPlayedAt(b.vid)-lastPlayedAt(a.vid)); // 최근 들은 순
+  if(st.mode==='name') arr.sort((a,b)=>(a.artist||'').localeCompare(b.artist||'','ko'));   // 이름 = 가수 ㄱ→ㅎ
+  else if(st.mode==='played') arr.sort((a,b)=>lastPlayedAt(b.vid)-lastPlayedAt(a.vid)); // 최근 들은 곡부터
+  else arr.sort((a,b)=>b.pos-a.pos);                                                     // 최근 추가 곡부터
   if(st.desc) arr.reverse();
   let html='';
   arr.forEach((s,i)=>{
@@ -845,13 +865,7 @@ function renderSongList(){
     html+=rowHtml(i+1,s.vid,s.title,s.artist,s.thumb).replace('class="rankRow"','class="rankRow" data-pos="'+s.pos+'"');
   });
   $('plModalList').innerHTML=html||'<div class="secError">곡을 찾지 못했어요.</div>';
-  // 버튼 표시: 모드 이름 + 현재 방향 설명
-  const names={
-    orig:  st.desc?'원래순 ▲ 늦게 추가':'원래순 ▼ 먼저 추가',
-    artist:st.desc?'🎤 가수순 ▲ ㅎ→ㄱ':'🎤 가수순 ▼ ㄱ→ㅎ',
-    played:st.desc?'🎧 들은순 ▲ 안 들은 곡부터':'🎧 들은순 ▼ 최근 들은 곡부터'
-  };
-  $('songSortBtn').innerHTML='<span class="si">↕</span>'+names[st.mode];
+  $('plSortBar').innerHTML=sortBarHtml(st);
 }
 let curPlGenre='';
 async function openPlaylist(plid, title){
@@ -955,16 +969,9 @@ document.addEventListener('click',e=>{
 });
 $('pmOpen').addEventListener('click',()=>{ const plid=$('pmOpen').dataset.plid; if(plid)openPlaylistInMusic(plid); });
 $('plModalClose').addEventListener('click',()=>$('plModal').classList.remove('show'));
-$('songSortBtn').addEventListener('click',()=>{
-  // 탭할 때마다: 방향 뒤집기 -> 다음 정렬로 (원래▼→원래▲→가수▼→가수▲→들은▼→들은▲→원래▼…)
-  const st=getSongSort();
-  let next;
-  if(!st.desc) next={mode:st.mode,desc:true};
-  else{
-    const order=['orig','artist','played'];
-    next={mode:order[(order.indexOf(st.mode)+1)%order.length],desc:false};
-  }
-  Store.set('songSort', next); renderSongList();
+$('plSortBar').addEventListener('click',e=>{
+  const b=e.target.closest('.sortBtn'); if(!b) return;
+  Store.set('songSort',nextSort(getSongSort(),b.dataset.sort)); renderSongList();
 });
 // 모달 좌우 스와이프로 닫기 (세로 스크롤 오인 방지 게이트 적용)
 let mTouchX=null, mTouchY=null;
