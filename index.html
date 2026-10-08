@@ -725,20 +725,13 @@ function renderMyChart(){
   const period=getMyPeriod();
   const view=getMyView();
   c.innerHTML=
-    '<div class="segBar" id="viewBar">'+
-      '<button class="segBtn '+(view==='rank'?'active':'')+'" data-view="rank">🏆 순위</button>'+
-      '<button class="segBtn '+(view==='cal'?'active':'')+'" data-view="cal">📅 달력</button>'+
-    '</div>'+
     '<div class="segBar" id="perBar">'+
       '<button class="segBtn '+(period==='year'?'active':'')+'" data-per="year">연간</button>'+
       '<button class="segBtn '+(period==='month'?'active':'')+'" data-per="month">월간</button>'+
       '<button class="segBtn '+(period==='week'?'active':'')+'" data-per="week">주간</button>'+
     '</div>'+
-    '<div id="swipeHint">← 좌우로 밀어서 전환 →</div>'+
+    '<div id="swipeHint">기간을 한 번 더 누르면 '+(view==='cal'?'순위':'달력')+' · 좌우로 밀어서 전환</div>'+
     '<div id="myChartBody"></div>';
-  c.querySelectorAll('#viewBar .segBtn').forEach(b=>b.addEventListener('click',()=>{
-    if(b.dataset.view!==getMyView()){ Store.set('myView',b.dataset.view); renderMyChart(); }
-  }));
   c.querySelectorAll('#perBar .segBtn').forEach(b=>b.addEventListener('click',()=>{
     if(b.dataset.per!==getMyPeriod()) Store.set('myPeriod',b.dataset.per);
     else Store.set('myView',getMyView()==='cal'?'rank':'cal'); // 이미 고른 기간을 한 번 더 누르면 순위↔달력
