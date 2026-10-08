@@ -326,8 +326,27 @@ const DEFAULT_CHANNELS=[
   {name:'마커스', url:'https://www.youtube.com/markersworship'},
   {name:'삼일교회', url:'https://www.youtube.com/@samilworship4373'},
   {name:'어노인팅', url:'https://www.youtube.com/user/anointingministry'},
+  {name:'Japanese Chill Lounge', url:'https://www.youtube.com/@JapaneseChillLounge'},
+  {name:'XxLurveAnimexX', url:'https://www.youtube.com/@XxLurveAnimexX'},
+  {name:'Artificial Vibes', url:'https://www.youtube.com/@ArtificialVibess'},
+  {name:"moksori's playlists", url:'https://www.youtube.com/@moksori'},
+  {name:'muyoni.', url:'https://www.youtube.com/@muyoni'},
+  {name:'Retro City Pop', url:'https://www.youtube.com/@retrocitypop'},
+  {name:'Shiloh Dynasty', url:'https://www.youtube.com/@shilohdynasty1059'},
 ];
 function getChannels(){ return Store.get('channels', DEFAULT_CHANNELS); }
+/* 새로 추가한 기본 채널을, 이미 채널 목록을 저장해 둔 폰에도 한 번만 덧붙임 (지운 건 다시 안 넣음) */
+const CH_ADD_VER=2;
+(function mergeNewChannels(){
+  if(Store.get('chAddVer',1)>=CH_ADD_VER) return;
+  const saved=Store.get('channels',null);
+  if(saved){
+    const have=new Set(saved.map(c=>(c.url||'').toLowerCase()));
+    DEFAULT_CHANNELS.slice(11).forEach(c=>{ if(!have.has(c.url.toLowerCase())) saved.push(c); });
+    Store.set('channels',saved);
+  }
+  Store.set('chAddVer',CH_ADD_VER);
+})();
 function getApiKey(){ return Store.get('apiKey',''); }
 function getMyPls(){ return Store.get('myPls', DEFAULT_MY); }
 function getOffPls(){ return Store.get('offPls', DEFAULT_OFFICIAL); }
@@ -812,7 +831,13 @@ async function renderPlaylistGrid(pls, label){
     const ids=pls.map(p=>extractPlaylistId(p.url)).filter(Boolean);
     if(ids.length===0){ c.innerHTML='<div class="secError">재생목록 링크를 인식하지 못했어요.</div>'; return; }
     const data=await ytFetch('playlists',{ part:'snippet,contentDetails', id:ids.join(','), maxResults:'50' });
-    const items=data.items||[];
+    let items=data.items||[];
+    // 채널로 옮긴 '나비워십 업로드' 재생목록은 추천에서 빼고 저장 목록에서도 지움
+    const drop=items.filter(it=>/^Uploads from NaviWorship/i.test((it.snippet&&it.snippet.title)||'')).map(it=>it.id);
+    if(drop.length){
+      items=items.filter(it=>!drop.includes(it.id));
+      ['myPls','offPls','perPls'].forEach(k=>{ const cur=Store.get(k,null); if(cur){ const nx=cur.filter(p=>!drop.includes(extractPlaylistId(p.url))); if(nx.length!==cur.length) Store.set(k,nx); } });
+    }
     if(items.length===0){ c.innerHTML='<div class="secError">재생목록을 찾지 못했어요. (비공개이거나 자동 생성 목록일 수 있어요)</div>'; return; }
     const sorted=sortGridItems(items, pls, getGridSort());
     let html='<div class="sortBar" id="gridSortBar">'+sortBarHtml(getGridSort())+'</div>';
