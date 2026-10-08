@@ -277,7 +277,7 @@
       <button class="setBtn danger" id="clearHistBtn" style="margin-top:10px;">내 순위 기록 초기화</button>
 
       <div class="setLabel">💾 백업 / 복원</div>
-      <div class="setHelp">앱을 지우기 전에 <b>내보내기</b>로 재생목록·채널을 복사해 메모장에 붙여두세요. 새로 깔면 <b>가져오기</b>로 그대로 복원됩니다.</div>
+      <div class="setHelp">앱을 지우기 전에 <b>내보내기</b>로 재생목록·채널·내 순위 기록을 복사해 메모장에 붙여두세요. 새로 깔면 <b>가져오기</b>로 그대로 복원됩니다.</div>
       <button class="setBtn sec" id="exportBtn" style="margin-top:10px;">📤 내보내기 (복사)</button>
       <textarea class="setInput" id="backupBox" placeholder="여기에 백업 내용이 나와요. 복원할 땐 저장해둔 내용을 여기 붙여넣고 '가져오기'를 누르세요." style="min-height:90px;margin-top:10px;font-size:12px;font-family:monospace;"></textarea>
       <button class="setBtn" id="importBtn" style="margin-top:10px;">📥 가져오기 (복원)</button>
@@ -1037,6 +1037,7 @@ $('exportBtn').addEventListener('click',()=>{
     v:1,
     myPls:getMyPls(), offPls:getOffPls(), perPls:getPerPls(),
     channels:getChannels(),
+    playHistory:getHistory(), plUsed:Store.get('plUsed',{}),
     apiKey:getApiKey()
   };
   const text=JSON.stringify(data);
@@ -1055,12 +1056,14 @@ $('importBtn').addEventListener('click',()=>{
   if(!raw){ toast('복원할 내용을 붙여넣어주세요'); return; }
   let data;
   try{ data=JSON.parse(raw); }catch(e){ toast('백업 내용 형식이 올바르지 않아요'); return; }
-  if(!data || (!data.myPls && !data.offPls && !data.perPls && !data.channels)){ toast('백업 내용을 알아볼 수 없어요'); return; }
-  if(!confirm('지금 저장된 재생목록을 백업 내용으로 덮어쓸까요?')) return;
+  if(!data || (!data.myPls && !data.offPls && !data.perPls && !data.channels && !data.playHistory)){ toast('백업 내용을 알아볼 수 없어요'); return; }
+  if(!confirm('지금 저장된 재생목록·채널·내 순위 기록을 백업 내용으로 덮어쓸까요?')) return;
   if(Array.isArray(data.myPls)) Store.set('myPls',data.myPls);
   if(Array.isArray(data.offPls)) Store.set('offPls',data.offPls);
   if(Array.isArray(data.perPls)) Store.set('perPls',data.perPls);
   if(Array.isArray(data.channels)) Store.set('channels',data.channels);
+  if(Array.isArray(data.playHistory)) Store.set('playHistory',data.playHistory);
+  if(data.plUsed && typeof data.plUsed==='object') Store.set('plUsed',data.plUsed);
   if(typeof data.apiKey==='string' && data.apiKey) Store.set('apiKey',data.apiKey);
   $('apiKeyInput').value=getApiKey();
   renderSavedPls(); toast('복원됐어요 · 적용 누르면 보여요');
