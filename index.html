@@ -228,8 +228,8 @@
   </div>
   <div id="tabs2" class="tabRow four">
     <button class="tab" data-tab="my">⭐ 내 음악</button>
-    <button class="tab" data-tab="official">🎵 추천</button>
-    <button class="tab" data-tab="period">📅 기간별</button>
+    <button class="tab" data-tab="period">💭 내 생각</button>
+    <button class="tab" data-tab="official">🎵 재생목록</button>
     <button class="tab" data-tab="channel">📺 채널</button>
   </div>
   <div id="content"></div>
@@ -266,12 +266,12 @@
       <div class="setLabel">⭐ 내 음악 재생목록</div>
       <div class="plAddRow"><input class="setInput" id="myPlInput" type="text" placeholder="재생목록 링크 붙여넣기" autocomplete="off"><button id="myPlAdd">추가</button></div>
       <div id="myPlList"></div>
-      <div class="setLabel">🎵 추천 재생목록</div>
-      <div class="plAddRow"><input class="setInput" id="offPlInput" type="text" placeholder="재생목록 링크 붙여넣기" autocomplete="off"><button id="offPlAdd">추가</button></div>
-      <div id="offPlList"></div>
-      <div class="setLabel">📅 기간별 재생목록</div>
+      <div class="setLabel">💭 내 생각 (내가 만든 재생목록)</div>
       <div class="plAddRow"><input class="setInput" id="perPlInput" type="text" placeholder="재생목록 링크 붙여넣기" autocomplete="off"><button id="perPlAdd">추가</button></div>
       <div id="perPlList"></div>
+      <div class="setLabel">🎵 재생목록 (가져온 재생목록)</div>
+      <div class="plAddRow"><input class="setInput" id="offPlInput" type="text" placeholder="재생목록 링크 붙여넣기" autocomplete="off"><button id="offPlAdd">추가</button></div>
+      <div id="offPlList"></div>
       <div class="setLabel">📺 채널</div>
       <div class="plAddRow"><input class="setInput" id="chInput" type="text" placeholder="채널 링크 또는 @이름 붙여넣기" autocomplete="off" autocorrect="off" autocapitalize="off"><button id="chAdd">추가</button></div>
       <div id="chSetList"></div>
@@ -361,7 +361,7 @@ const CH_ADD_VER=3;
   }
   Store.set('chAddVer',CH_ADD_VER);
 })();
-/* 새로 추가한 추천 재생목록을, 이미 추천 목록을 저장해 둔 폰에도 한 번만 덧붙임 (없는 것만) */
+/* 새로 추가한 기본 재생목록을, 이미 재생목록을 저장해 둔 폰에도 한 번만 덧붙임 (없는 것만) */
 const OFF_ADD_VER=2;
 (function mergeNewOfficial(){
   if(Store.get('offAddVer',1)>=OFF_ADD_VER) return;
@@ -372,6 +372,23 @@ const OFF_ADD_VER=2;
     Store.set('offPls',saved);
   }
   Store.set('offAddVer',OFF_ADD_VER);
+})();
+/* 재생목록(가져온 것)에 직접 넣어 둔 재생목록(기본값에 없는 것)을 내 생각으로 한 번만 옮김 */
+(function moveMineToThink(){
+  if(Store.get('mineMoved',false)) return;
+  const saved=Store.get('offPls',null);
+  if(saved){
+    const def=new Set(DEFAULT_OFFICIAL.map(p=>extractPlaylistId(p.url)));
+    const mine=saved.filter(p=>!def.has(extractPlaylistId(p.url)));
+    if(mine.length){
+      const per=Store.get('perPls',DEFAULT_PERIOD).slice();
+      const have=new Set(per.map(p=>extractPlaylistId(p.url)));
+      mine.forEach(p=>{ if(!have.has(extractPlaylistId(p.url))) per.push(p); });
+      Store.set('perPls',per);
+      Store.set('offPls',saved.filter(p=>def.has(extractPlaylistId(p.url))));
+    }
+  }
+  Store.set('mineMoved',true);
 })();
 function getApiKey(){ return Store.get('apiKey',''); }
 function getMyPls(){ return Store.get('myPls', DEFAULT_MY); }
@@ -470,8 +487,8 @@ async function ytFetch(endpoint, params){
   if(data.error){ throw {api:data.error}; }
   return data;
 }
-/* 화면 묶음: 앞(순위·내 순위) / 메뉴(내 음악·추천·기간별·채널) */
-const MENU_TABS=['my','official','period','channel'];
+/* 화면 묶음: 앞(순위·내 순위) / 메뉴(내 음악·내 생각·재생목록·채널) */
+const MENU_TABS=['my','period','official','channel'];
 function goTab(tab){
   if(tab==='front') tab=Store.get('lastFront','chart'); // 순위 쪽: 마지막에 보던 탭으로
   if(tab==='songs') tab=Store.get('lastSong','my');     // 내 노래 쪽: 마지막에 보던 탭으로
@@ -505,8 +522,8 @@ function renderTab(){
   }
   if(currentTab==='chart'){ renderChart(); }
   else if(currentTab==='my'){ renderPlaylistGrid(getMyPls(),'내 음악'); }
-  else if(currentTab==='official'){ renderPlaylistGrid(getOffPls(),'추천'); }
-  else if(currentTab==='period'){ renderPlaylistGrid(getPerPls(),'기간별'); }
+  else if(currentTab==='official'){ renderPlaylistGrid(getOffPls(),'재생목록'); }
+  else if(currentTab==='period'){ renderPlaylistGrid(getPerPls(),'내 생각'); }
 }
 
 /* ===== 채널 ===== */
@@ -858,7 +875,7 @@ async function renderPlaylistGrid(pls, label){
     if(ids.length===0){ c.innerHTML='<div class="secError">재생목록 링크를 인식하지 못했어요.</div>'; return; }
     const data=await ytFetch('playlists',{ part:'snippet,contentDetails', id:ids.join(','), maxResults:'50' });
     let items=data.items||[];
-    // 채널로 옮긴 '나비워십 업로드' 재생목록은 추천에서 빼고 저장 목록에서도 지움
+    // 채널로 옮긴 '나비워십 업로드' 재생목록은 재생목록 탭에서 빼고 저장 목록에서도 지움
     const drop=items.filter(it=>/^Uploads from NaviWorship/i.test((it.snippet&&it.snippet.title)||'')).map(it=>it.id);
     if(drop.length){
       items=items.filter(it=>!drop.includes(it.id));
@@ -1054,7 +1071,7 @@ $('dtSheet').addEventListener('touchend',e=>{
   if(Math.abs(dx)<Math.abs(dy)*1.5) return;
   $('dtSheet').classList.remove('show');
 },{passive:true});
-/* 좌우 스와이프 — 앞 5칸(한국·글로벌·연간·월간·주간) / 메뉴 4칸(내 음악·추천·기간별·채널) 각각 순환 */
+/* 좌우 스와이프 — 앞 5칸(한국·글로벌·연간·월간·주간) / 메뉴 4칸(내 음악·내 생각·재생목록·채널) 각각 순환 */
 const FRONT_STEPS=[['chart','KR'],['chart','GL'],['mychart','year'],['mychart','month'],['mychart','week']];
 function frontIndex(){
   if(currentTab==='chart') return getRegion()==='GL'?1:0;
