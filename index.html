@@ -311,6 +311,18 @@ const DEFAULT_MY=[
 const DEFAULT_OFFICIAL=[
   {url:'https://youtube.com/playlist?list=RDCLAK5uy_l7wbVbkC-dG5fyEQQsBfjm_z3dLAhYyvo'},
   {url:'https://youtube.com/playlist?list=RDCLAK5uy_nMqMWmqwZwDvMcqcAohgO_Dp_7zT1nSC8'},
+  {url:'https://youtube.com/playlist?list=RDCLAK5uy_kd0jYs5ssZ0yMCd8g_oPiIGGQQ4CB7Ffc'},
+  {url:'https://youtube.com/playlist?list=RDCLAK5uy_lFuA--WIEukXUJ93HkgnVOv0Bs02c_O4g'},
+  {url:'https://youtube.com/playlist?list=RDCLAK5uy_mJYuU4vvhUKe2eFm2oJ57gWwZA4KiXZGI'},
+  {url:'https://youtube.com/playlist?list=RDCLAK5uy_nBE4bLuBHUXWZrF59ZrkPEToKt8M_I3Vc'},
+  {url:'https://youtube.com/playlist?list=RDCLAK5uy_k6PkYWus1Mt-aKrbb0Ne8SkA2BgAk1Yy4'},
+  {url:'https://youtube.com/playlist?list=RDCLAK5uy_lGEOjy5U8xV41C8_LyqNnAZKOH6sGyutI'},
+  {url:'https://youtube.com/playlist?list=RDCLAK5uy_lsdV5oBPFEC87QS1yTL1UFbqzVmKNAisE'},
+  {url:'https://youtube.com/playlist?list=RDCLAK5uy_mFO2tSOkp3Ti5zWQoaPsXJ-rhcKZ6iv30'},
+  {url:'https://youtube.com/playlist?list=RDCLAK5uy_k5DSSJlM3YuIZ3ib0b0PVdfnP91-M1tHs'},
+  {url:'https://youtube.com/playlist?list=RDCLAK5uy_mJGVFXt0gqpyQkEb_Z7qfTYtTKUUsD_YE'},
+  {url:'https://youtube.com/playlist?list=PLm_3vnTS-pvm1dVs_0kCY172S4VlmIh_R'},
+  {url:'https://youtube.com/playlist?list=PLQtefrYeRXAXG2sZVdU0rAaPnVsBVBKRW'},
 ];
 const DEFAULT_PERIOD=[];
 /* 채널: name=표시 이름, url=채널 주소, team=같은 팀 묶음 이름(있으면 한 칸에 묶어 표시) */
@@ -333,19 +345,33 @@ const DEFAULT_CHANNELS=[
   {name:'muyoni.', url:'https://www.youtube.com/@muyoni'},
   {name:'Retro City Pop', url:'https://www.youtube.com/@retrocitypop'},
   {name:'Shiloh Dynasty', url:'https://www.youtube.com/@shilohdynasty1059'},
+  {name:'樂來樂愛Music', url:'https://www.youtube.com/channel/UCaPCKsRDeDaSIwJEa64a_5A'},
+  {name:'Chill girl Vibes', url:'https://www.youtube.com/channel/UCF3RacYoFkW7MV6QKCpC6wQ'},
 ];
 function getChannels(){ return Store.get('channels', DEFAULT_CHANNELS); }
 /* 새로 추가한 기본 채널을, 이미 채널 목록을 저장해 둔 폰에도 한 번만 덧붙임 (지운 건 다시 안 넣음) */
-const CH_ADD_VER=2;
+const CH_ADD_VER=3;
 (function mergeNewChannels(){
   if(Store.get('chAddVer',1)>=CH_ADD_VER) return;
   const saved=Store.get('channels',null);
   if(saved){
     const have=new Set(saved.map(c=>(c.url||'').toLowerCase()));
-    DEFAULT_CHANNELS.slice(11).forEach(c=>{ if(!have.has(c.url.toLowerCase())) saved.push(c); });
+    DEFAULT_CHANNELS.slice(18).forEach(c=>{ if(!have.has(c.url.toLowerCase())) saved.push(c); });
     Store.set('channels',saved);
   }
   Store.set('chAddVer',CH_ADD_VER);
+})();
+/* 새로 추가한 추천 재생목록을, 이미 추천 목록을 저장해 둔 폰에도 한 번만 덧붙임 (없는 것만) */
+const OFF_ADD_VER=2;
+(function mergeNewOfficial(){
+  if(Store.get('offAddVer',1)>=OFF_ADD_VER) return;
+  const saved=Store.get('offPls',null);
+  if(saved){
+    const have=new Set(saved.map(p=>extractPlaylistId(p.url)));
+    DEFAULT_OFFICIAL.slice(2).forEach(p=>{ if(!have.has(extractPlaylistId(p.url))) saved.push(p); });
+    Store.set('offPls',saved);
+  }
+  Store.set('offAddVer',OFF_ADD_VER);
 })();
 function getApiKey(){ return Store.get('apiKey',''); }
 function getMyPls(){ return Store.get('myPls', DEFAULT_MY); }
