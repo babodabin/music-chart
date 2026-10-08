@@ -730,7 +730,9 @@ function renderMyChart(){
     if(b.dataset.view!==getMyView()){ Store.set('myView',b.dataset.view); renderMyChart(); }
   }));
   c.querySelectorAll('#perBar .segBtn').forEach(b=>b.addEventListener('click',()=>{
-    if(b.dataset.per!==getMyPeriod()){ Store.set('myPeriod',b.dataset.per); renderMyChart(); }
+    if(b.dataset.per!==getMyPeriod()) Store.set('myPeriod',b.dataset.per);
+    else Store.set('myView',getMyView()==='cal'?'rank':'cal'); // 이미 고른 기간을 한 번 더 누르면 순위↔달력
+    renderMyChart();
   }));
   const body=$('myChartBody');
   // 달력 보기
