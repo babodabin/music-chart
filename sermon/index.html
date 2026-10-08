@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>말씀</title>
+<meta name="theme-color" content="#2a2418">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="말씀">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="word-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="word-192.png">
+<style>
+  :root{
+    --bg:#1f1d1a; --bg2:rgba(255,255,255,.07); --bg3:rgba(255,255,255,.12); --line:rgba(255,255,255,.09);
+    --glow:radial-gradient(120% 60% at 70% 0%,#5a4520 0%,#2a2418 45%,#1f1d1a 100%) fixed #1f1d1a;
+    --txt:#f2f2f2; --dim:#9a9a9a; --dim2:#6a6a6a;
+    --gold:#e0b96a; --golddim:#c9a050;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;overflow:hidden;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    background:var(--glow);color:var(--txt);display:flex;flex-direction:column;height:100dvh;
+    user-select:none;-webkit-user-select:none;}
+  #header{flex:0 0 auto;padding:calc(env(safe-area-inset-top) + 12px) 16px 6px;
+    display:flex;align-items:center;justify-content:space-between;}
+  #header h1{font-size:22px;font-weight:800;letter-spacing:-.5px;display:flex;align-items:center;gap:9px;}
+  #header h1 span{color:var(--gold);}
+  #header h1 img{width:32px;height:32px;border-radius:9px;}
+  .iconBtn{width:40px;height:40px;border:none;background:var(--bg2);border-radius:50%;
+    color:var(--txt);font-size:18px;display:flex;align-items:center;justify-content:center;}
+  .iconBtn:active{background:var(--bg3);}
+  /* 추가 줄 */
+  #addRow{flex:0 0 auto;display:flex;gap:6px;padding:6px 14px 4px;}
+  #addInput{flex:1 1 auto;min-width:0;background:var(--bg2);border:1px solid var(--line);border-radius:12px;
+    color:var(--txt);font-size:14px;padding:11px 12px;outline:none;user-select:text;-webkit-user-select:text;}
+  #addInput:focus{border-color:var(--golddim);}
+  .smBtn{flex:0 0 auto;border:none;background:var(--bg2);color:var(--txt);border-radius:12px;font-size:14px;font-weight:700;padding:0 13px;}
+  .smBtn:active{background:var(--bg3);}
+  .smBtn.gold{background:var(--gold);color:#1f1d1a;}
+  /* 탭 */
+  .tabRow{flex:0 0 auto;display:flex;gap:6px;padding:8px 14px 6px;}
+  .tab{flex:1 1 0;background:var(--bg2);border:none;border-radius:12px;color:var(--dim);
+    font-size:14px;font-weight:700;padding:11px 0;white-space:nowrap;}
+  .tab.active{background:var(--gold);color:#1f1d1a;}
+  .tab .n{font-size:11px;font-weight:600;opacity:.75;margin-left:3px;}
+  /* 목사님 고르기 */
+  #whoRow{flex:0 0 auto;display:flex;gap:6px;padding:2px 14px 8px;overflow-x:auto;scrollbar-width:none;}
+  #whoRow::-webkit-scrollbar{display:none;}
+  .chip{flex:0 0 auto;border:1px solid var(--line);background:transparent;color:var(--dim);border-radius:999px;
+    font-size:13px;font-weight:600;padding:7px 13px;white-space:nowrap;}
+  .chip.on{border-color:var(--gold);color:var(--gold);}
+  /* 목록 */
+  #list{flex:1 1 auto;overflow-y:auto;padding:2px 14px calc(env(safe-area-inset-bottom) + 24px);-webkit-overflow-scrolling:touch;}
+  .grp{margin-bottom:12px;}
+  .grpT{font-size:12px;font-weight:800;color:var(--gold);padding:8px 4px 6px;letter-spacing:.3px;}
+  .card{display:flex;align-items:center;background:var(--bg2);border-radius:14px;margin-bottom:6px;overflow:hidden;}
+  .card .main{flex:1 1 auto;min-width:0;border:none;background:none;color:var(--txt);text-align:left;padding:13px 6px 13px 14px;}
+  .card .main:active{background:var(--bg3);}
+  .card .t{font-size:15px;font-weight:700;line-height:1.35;word-break:keep-all;}
+  .card .s{font-size:12px;color:var(--dim);margin-top:4px;}
+  .card .more{flex:0 0 auto;width:46px;align-self:stretch;border:none;background:none;color:var(--dim);font-size:20px;}
+  .card .more:active{background:var(--bg3);}
+  .empty{color:var(--dim);font-size:14px;text-align:center;padding:40px 10px;line-height:1.7;}
+  /* 아래에서 올라오는 창 */
+  #dim{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .2s;z-index:10;}
+  #dim.on{opacity:1;pointer-events:auto;}
+  #sheet{position:fixed;left:0;right:0;bottom:0;max-height:85dvh;overflow-y:auto;background:#26231e;border-radius:18px 18px 0 0;
+    padding:14px 16px calc(env(safe-area-inset-bottom) + 18px);transform:translateY(105%);transition:transform .25s ease;z-index:11;}
+  #sheet.on{transform:none;}
+  .shT{font-size:16px;font-weight:800;margin-bottom:4px;word-break:keep-all;}
+  .shS{font-size:12px;color:var(--dim);margin-bottom:12px;}
+  .shLabel{font-size:12px;font-weight:800;color:var(--dim);margin:14px 0 6px;}
+  .shBtn{display:block;width:100%;border:none;background:var(--bg2);color:var(--txt);border-radius:12px;font-size:15px;font-weight:600;
+    padding:13px 14px;text-align:left;margin-bottom:6px;}
+  .shBtn:active{background:var(--bg3);}
+  .shBtn.red{color:#ff8a80;}
+  .seg{display:flex;gap:6px;flex-wrap:wrap;}
+  .seg button{flex:1 1 0;border:1px solid var(--line);background:transparent;color:var(--dim);border-radius:10px;font-size:13px;font-weight:700;padding:10px 0;}
+  .seg button.on{border-color:var(--gold);color:var(--gold);}
+  .shInput{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:12px;color:var(--txt);font-size:14px;padding:11px 12px;outline:none;
+    user-select:text;-webkit-user-select:text;}
+  textarea.shInput{height:120px;resize:none;font-family:monospace;font-size:12px;}
+  .pick{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--line);font-size:14px;}
+  .pick input{width:18px;height:18px;accent-color:var(--gold);flex:0 0 auto;}
+  .pick.had{color:var(--dim2);}
+  .help{font-size:12px;color:var(--dim);line-height:1.6;margin-top:6px;}
+  #toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 30px);transform:translateX(-50%) translateY(20px);
+    background:#3a342a;color:var(--txt);font-size:14px;padding:11px 18px;border-radius:999px;opacity:0;transition:all .2s;z-index:20;pointer-events:none;white-space:nowrap;}
+  #toast.on{opacity:1;transform:translateX(-50%);}
+</style>
+</head>
+<body>
+<div id="header">
+  <h1><img src="word-192.png" alt="">말<span>씀</span></h1>
+  <button class="iconBtn" id="setBtn" aria-label="설정">⚙</button>
+</div>
+<div id="addRow">
+  <input id="addInput" type="text" placeholder="재생목록 링크 붙여넣기" autocomplete="off" autocorrect="off" autocapitalize="off">
+  <button class="smBtn" id="pasteBtn" aria-label="붙여넣기">📋</button>
+  <button class="smBtn gold" id="addBtn">추가</button>
+</div>
+<div class="tabRow" id="tabs">
+  <button class="tab" data-cat="ot">구약</button>
+  <button class="tab" data-cat="nt">신약</button>
+  <button class="tab" data-cat="topic">주제</button>
+  <button class="tab" data-cat="etc">기타</button>
+</div>
+<div id="whoRow"></div>
+<div id="list"></div>
+<div id="dim"></div>
+<div id="sheet"></div>
+<div id="toast"></div>
+<script>
+/* ===== 저장소 (음악 차트와 같은 주소라 키 앞에 sm_ 를 붙여 섞이지 않게) ===== */
+const Store=(function(){
+  let mem={}; let useLS=true;
+  try{ localStorage.setItem('__t','1'); localStorage.removeItem('__t'); }catch(e){ useLS=false; }
+  return {
+    get(k,def){
+      try{ if(useLS){ const v=localStorage.getItem(k); return v===null?def:JSON.parse(v); } }catch(e){}
+      return (k in mem)?mem[k]:def;
+    },
+    set(k,v){
+      try{ if(useLS){ localStorage.setItem(k,JSON.stringify(v)); return; } }catch(e){}
+      mem[k]=v;
+    }
+  };
+})();
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* 처음 들어 있는 재생목록 */
+const DEFAULT_ITEMS=[
+  {id:'PL3pUtc33amhSrI6oxuvg3lBSwXa8Q7Pyc', title:'사사기 강해 (2025) | 송태근 목사', author:'SamilChurch삼일교회'},
+  {id:'PL3pUtc33amhTFW2lsi1kpX1Aunk4BKN-g', title:'십계명 강해 /송태근 목사', author:'SamilChurch삼일교회'},
+  {id:'PL3pUtc33amhT8oZaLMhZ2NfHcHEjN2a3N', title:'빌립보서 강해 | 송태근 목사', author:'SamilChurch삼일교회'},
+];
+const DEFAULT_ALIAS={'SamilChurch삼일교회':'송태근 목사'};
+function getItems(){ return Store.get('sm_items', DEFAULT_ITEMS); }
+function setItems(v){ Store.set('sm_items', v); }
+function getAlias(){ return Store.get('sm_alias', DEFAULT_ALIAS); }
+function who(it){ const a=getAlias(); return a[it.author]||it.author||'모름'; }
+function getApiKey(){ return Store.get('apiKey',''); } // 음악 차트 앱에 넣어 둔 키를 같이 씀
+
+/* ===== 성경 66권: 제목에서 찾아 구약/신약 자동 분류 ===== */
+const OT='창세기 출애굽기 레위기 민수기 신명기 여호수아 사사기 룻기 사무엘상 사무엘하 열왕기상 열왕기하 역대상 역대하 에스라 느헤미야 에스더 욥기 시편 잠언 전도서 아가 이사야 예레미야 예레미야애가 에스겔 다니엘 호세아 요엘 아모스 오바댜 요나 미가 나훔 하박국 스바냐 학개 스가랴 말라기'.split(' ');
+const NT='마태복음 마가복음 누가복음 요한복음 사도행전 로마서 고린도전서 고린도후서 갈라디아서 에베소서 빌립보서 골로새서 데살로니가전서 데살로니가후서 디모데전서 디모데후서 디도서 빌레몬서 히브리서 야고보서 베드로전서 베드로후서 요한일서 요한이서 요한삼서 유다서 요한계시록'.split(' ');
+const BOOKS=[...OT.map((b,i)=>({b,i,cat:'ot'})),...NT.map((b,i)=>({b,i:100+i,cat:'nt'}))];
+// 줄여 쓰는 이름 → 책
+const EXTRA={'애가':'예레미야애가','사무엘':'사무엘상','열왕기':'열왕기상','역대':'역대상','고린도':'고린도전서','데살로니가':'데살로니가전서',
+  '디모데':'디모데전서','베드로':'베드로전서','계시록':'요한계시록','십계명':'출애굽기','산상수훈':'마태복음','마태':'마태복음','마가':'마가복음',
+  '누가':'누가복음','로마':'로마서','갈라디아':'갈라디아서','에베소':'에베소서','빌립보':'빌립보서','골로새':'골로새서','히브리':'히브리서','야고보':'야고보서','사도행전':'사도행전'};
+const ALIASES=[...BOOKS.map(x=>[x.b,x.b]),...Object.entries(EXTRA)].sort((a,b)=>b[0].length-a[0].length);
+const BOOK_BY_NAME=Object.fromEntries(BOOKS.map(x=>[x.b,x]));
+function findBook(title){
+  const t=' '+String(title||'')+' ';
+  for(const [al,b] of ALIASES){
+    // 앞뒤가 한글이 아니어야 (예: '아가페'의 '아가'는 빼고), 뒤에 '강해'는 붙어도 됨
+    const re=new RegExp('(^|[^가-힣])'+al+'(?=[^가-힣]|강해|설교|$)');
+    if(re.test(t)) return BOOK_BY_NAME[b];
+  }
+  return null;
+}
+const SERMON_WORDS=/목사|강해|설교|교회|말씀|예배|기도|큐티|QT|새벽|성경|복음|찬양|선교|전도사|신부|스님/i;
+function autoCat(it){
+  const bk=findBook(it.title); if(bk) return bk.cat;
+  return SERMON_WORDS.test((it.title||'')+' '+(it.author||''))?'topic':'etc';
+}
+function catOf(it){ return it.cat||autoCat(it); }
+const CAT_NAME={ot:'구약',nt:'신약',topic:'주제',etc:'기타'};
+
+/* ===== 링크에서 재생목록 ID 꺼내기 ===== */
+function extractId(s){
+  s=String(s||'');
+  const m=s.match(/[?&]list=([A-Za-z0-9_-]+)/); if(m) return m[1];
+  const m2=s.match(/^\s*((?:PL|OL|RD|UU|FL)[A-Za-z0-9_-]{10,})\s*$/); return m2?m2[1]:null;
+}
+const plUrl=id=>'https://www.youtube.com/playlist?list='+id;
+
+/* 제목·채널 가져오기: 키 없이 oEmbed, 키가 있으면 편 수까지 */
+async function fetchInfo(id){
+  const key=getApiKey();
+  if(key){
+    try{
+      const r=await fetch('https://www.googleapis.com/youtube/v3/playlists?part=snippet,contentDetails&id='+id+'&key='+encodeURIComponent(key));
+      const d=await r.json(); const it=d.items&&d.items[0];
+      if(it) return {id, title:it.snippet.title, author:it.snippet.channelTitle, count:it.contentDetails.itemCount};
+    }catch(e){}
+  }
+  try{
+    const r=await fetch('https://www.youtube.com/oembed?format=json&url='+encodeURIComponent(plUrl(id)));
+    if(r.ok){ const d=await r.json(); return {id, title:d.title, author:d.author_name}; }
+  }catch(e){}
+  return null;
+}
+async function addById(id,{quiet}={}){
+  const items=getItems();
+  if(items.some(x=>x.id===id)){ if(!quiet) toast('이미 있어요'); return false; }
+  const info=await fetchInfo(id);
+  if(!info){ toast('재생목록을 찾지 못했어요 (비공개일 수 있어요)'); return false; }
+  const cur=getItems(); cur.push(info); setItems(cur);
+  if(!quiet){ toast('추가했어요: '+info.title); currentCat=catOf(info); Store.set('sm_tab',currentCat); }
+  render(); return true;
+}
+async function addFromText(text){
+  const id=extractId(text);
+  if(!id){ toast('재생목록 링크가 아니에요'); return; }
+  await addById(id);
+}
+
+/* ===== 화면 ===== */
+let currentCat=Store.get('sm_tab','ot');
+let currentWho=Store.get('sm_who','');
+function render(){
+  const items=getItems();
+  // 탭 개수
+  const counts={ot:0,nt:0,topic:0,etc:0}; items.forEach(it=>counts[catOf(it)]++);
+  document.querySelectorAll('#tabs .tab').forEach(b=>{
+    const c=b.dataset.cat; b.classList.toggle('active',c===currentCat);
+    b.innerHTML=CAT_NAME[c]+(counts[c]?'<span class="n">'+counts[c]+'</span>':'');
+  });
+  const inCat=items.filter(it=>catOf(it)===currentCat);
+  // 목사님 고르기
+  const whos=[...new Set(inCat.map(who))].sort((a,b)=>a.localeCompare(b,'ko'));
+  if(currentWho && !whos.includes(currentWho)) currentWho='';
+  $('whoRow').style.display=whos.length>1?'':'none';
+  $('whoRow').innerHTML=['<button class="chip'+(currentWho?'':' on')+'" data-who="">전체</button>']
+    .concat(whos.map(w=>'<button class="chip'+(w===currentWho?' on':'')+'" data-who="'+esc(w)+'">'+esc(w)+'</button>')).join('');
+  const shown=inCat.filter(it=>!currentWho||who(it)===currentWho);
+  if(!shown.length){
+    $('list').innerHTML='<div class="empty">'+(items.length?'여기는 아직 비어 있어요.':'재생목록이 없어요.')+
+      '<br>YouTube에서 <b>공유 → 말씀</b>을 누르거나<br>위에 링크를 붙여 넣어 추가하세요.</div>';
+    return;
+  }
+  // 묶기: 구약/신약은 성경 책별(성경 순서), 주제/기타는 목사님별
+  const groups=new Map();
+  const isBible=currentCat==='ot'||currentCat==='nt';
+  shown.forEach(it=>{
+    let key,ord;
+    if(isBible){ const bk=findBook(it.title); key=bk?bk.b:'그 외'; ord=bk?bk.i:999; }
+    else { key=who(it); ord=0; }
+    if(!groups.has(key)) groups.set(key,{ord,list:[]});
+    groups.get(key).list.push(it);
+  });
+  const sorted=[...groups.entries()].sort((a,b)=>a[1].ord-b[1].ord||a[0].localeCompare(b[0],'ko'));
+  $('list').innerHTML=sorted.map(([k,g])=>'<div class="grp"><div class="grpT">'+esc(k)+'</div>'+
+    g.list.map(it=>'<div class="card"><button class="main" data-id="'+esc(it.id)+'"><div class="t">'+esc(it.title)+'</div>'+
+      '<div class="s">'+esc(who(it))+(it.count?' · '+it.count+'편':'')+'</div></button>'+
+      '<button class="more" data-more="'+esc(it.id)+'" aria-label="더보기">⋯</button></div>').join('')+'</div>').join('');
+}
+
+/* 누르면 공유 창 → AdGuard / 브라우저 고르기 (그냥 열면 YouTube 앱이 열려서) */
+async function shareItem(id){
+  const it=getItems().find(x=>x.id===id); const url=plUrl(id);
+  if(navigator.share){
+    try{ await navigator.share({title:it?it.title:'', url}); return; }
+    catch(e){ if(e&&e.name==='AbortError') return; }
+  }
+  copyText(url,'링크를 복사했어요. AdGuard에 붙여 넣으세요');
+}
+function copyText(t,msg){
+  const done=()=>toast(msg||'복사했어요');
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(done,()=>fallback()); }
+  else fallback();
+  function fallback(){ const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); done(); }catch(e){ toast('복사하지 못했어요'); } ta.remove(); }
+}
+let toastT;
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'),2200); }
+
+/* ===== 아래 창 ===== */
+function openSheet(html){ $('sheet').innerHTML=html; $('sheet').classList.add('on'); $('dim').classList.add('on'); }
+function closeSheet(){ $('sheet').classList.remove('on'); $('dim').classList.remove('on'); }
+$('dim').addEventListener('click',closeSheet);
+
+function openItemSheet(id){
+  const it=getItems().find(x=>x.id===id); if(!it) return;
+  const c=catOf(it);
+  openSheet('<div class="shT">'+esc(it.title)+'</div><div class="shS">'+esc(who(it))+'</div>'+
+    '<button class="shBtn" data-act="share">📤 공유 (AdGuard로 보기)</button>'+
+    '<button class="shBtn" data-act="copy">🔗 링크 복사</button>'+
+    '<div class="shLabel">분류 옮기기</div><div class="seg">'+
+      ['ot','nt','topic','etc'].map(k=>'<button data-cat="'+k+'" class="'+(k===c?'on':'')+'">'+CAT_NAME[k]+'</button>').join('')+'</div>'+
+    (it.cat?'<div class="help">직접 옮긴 분류예요. <u data-act="auto">자동 분류로 되돌리기</u></div>':'')+
+    '<div class="shLabel">목사님 이름 (같은 채널 전체에 적용)</div>'+
+    '<div style="display:flex;gap:6px"><input class="shInput" id="aliasIn" value="'+esc(who(it))+'"><button class="smBtn gold" data-act="alias">저장</button></div>'+
+    '<div class="help">채널: '+esc(it.author)+'</div>'+
+    '<div class="shLabel"></div><button class="shBtn red" data-act="del">🗑 이 재생목록 빼기</button>');
+  $('sheet').onclick=e=>{
+    const b=e.target.closest('[data-act],[data-cat]'); if(!b) return;
+    const items=getItems(); const x=items.find(y=>y.id===id);
+    if(b.dataset.cat){ x.cat=b.dataset.cat; setItems(items); currentCat=x.cat; Store.set('sm_tab',currentCat); closeSheet(); render(); toast(CAT_NAME[x.cat]+'(으)로 옮겼어요'); return; }
+    const a=b.dataset.act;
+    if(a==='share'){ closeSheet(); shareItem(id); }
+    else if(a==='copy'){ closeSheet(); copyText(plUrl(id),'링크를 복사했어요'); }
+    else if(a==='auto'){ delete x.cat; setItems(items); closeSheet(); render(); }
+    else if(a==='alias'){ const v=$('aliasIn').value.trim(); const al=getAlias(); if(v&&v!==x.author) al[x.author]=v; else delete al[x.author];
+      Store.set('sm_alias',al); currentWho=''; closeSheet(); render(); toast('이름을 바꿨어요'); }
+    else if(a==='del'){ setItems(items.filter(y=>y.id!==id)); closeSheet(); render(); toast('뺐어요'); }
+  };
+}
+
+/* 설정: 채널에서 담기 · 백업/복원 */
+function openSettings(){
+  const hasKey=!!getApiKey();
+  openSheet('<div class="shT">설정</div>'+
+    '<div class="shLabel">📺 채널에서 한 번에 담기</div>'+
+    '<div style="display:flex;gap:6px"><input class="shInput" id="chIn" placeholder="채널 링크 또는 @이름" autocapitalize="off"><button class="smBtn gold" data-act="ch">찾기</button></div>'+
+    (hasKey?'':'<div class="help">이 기능은 음악 차트 앱에 넣어 둔 YouTube API 키가 필요해요. 음악 차트 ⚙ 설정에서 키를 먼저 넣어 주세요.</div>')+
+    '<div id="chOut"></div>'+
+    '<div class="shLabel">💾 백업 / 복원</div>'+
+    '<button class="shBtn" data-act="backup">백업 내용 복사</button>'+
+    '<textarea class="shInput" id="restoreIn" placeholder="복원하려면 백업 내용을 여기에 붙여 넣고 아래 버튼"></textarea>'+
+    '<button class="shBtn" data-act="restore" style="margin-top:6px">복원하기</button>'+
+    '<div class="help">공유로 추가하려면: Chrome 메뉴 ⋮ → <b>홈 화면에 추가</b>(앱 설치)를 한 번 해 두면, YouTube 공유 목록에 <b>말씀</b>이 나타나요.</div>');
+  $('sheet').onclick=async e=>{
+    const b=e.target.closest('[data-act]'); if(!b) return;
+    const a=b.dataset.act;
+    if(a==='ch') loadChannel($('chIn').value);
+    else if(a==='backup') copyText(JSON.stringify({items:getItems(),alias:getAlias()}),'백업 내용을 복사했어요. 메모장 등에 보관하세요');
+    else if(a==='restore'){
+      try{ const d=JSON.parse($('restoreIn').value); if(!Array.isArray(d.items)) throw 0;
+        setItems(d.items); if(d.alias) Store.set('sm_alias',d.alias); closeSheet(); render(); toast('복원했어요'); }
+      catch(err){ toast('백업 내용을 알아볼 수 없어요'); }
+    }
+    else if(a==='pickAll'){ document.querySelectorAll('#chOut input:not(:disabled)').forEach(c=>c.checked=true); }
+    else if(a==='addPicked'){
+      const ids=[...document.querySelectorAll('#chOut input:checked:not(:disabled)')].map(c=>c.value);
+      if(!ids.length){ toast('고른 게 없어요'); return; }
+      const cur=getItems(); const have=new Set(cur.map(x=>x.id));
+      (window._chPls||[]).filter(p=>ids.includes(p.id)&&!have.has(p.id)).forEach(p=>cur.push(p));
+      setItems(cur); closeSheet(); render(); toast(ids.length+'개 담았어요');
+    }
+  };
+}
+async function loadChannel(input){
+  const key=getApiKey(); const out=$('chOut');
+  if(!key){ toast('API 키가 필요해요'); return; }
+  input=String(input||'').trim(); if(!input){ toast('채널 링크를 넣어 주세요'); return; }
+  out.innerHTML='<div class="help">찾는 중…</div>';
+  const api=(p,q)=>fetch('https://www.googleapis.com/youtube/v3/'+p+'?'+new URLSearchParams({...q,key})).then(r=>r.json());
+  try{
+    let chId=(input.match(/(UC[A-Za-z0-9_-]{22})/)||[])[1];
+    if(!chId){
+      const h=(input.match(/@([^/?#\s]+)/)||[])[1]||input.replace(/^.*youtube\.com\//,'').replace(/[/?#].*$/,'');
+      const d=await api('channels',{part:'id',forHandle:'@'+decodeURIComponent(h)});
+      chId=d.items&&d.items[0]&&d.items[0].id;
+    }
+    if(!chId){ out.innerHTML='<div class="help">채널을 찾지 못했어요.</div>'; return; }
+    let pls=[],page='';
+    do{
+      const d=await api('playlists',{part:'snippet,contentDetails',channelId:chId,maxResults:'50',...(page?{pageToken:page}:{})});
+      if(d.error){ out.innerHTML='<div class="help">불러오지 못했어요: '+esc(d.error.message)+'</div>'; return; }
+      (d.items||[]).forEach(it=>pls.push({id:it.id,title:it.snippet.title,author:it.snippet.channelTitle,count:it.contentDetails.itemCount}));
+      page=d.nextPageToken||'';
+    }while(page && pls.length<500);
+    window._chPls=pls;
+    const have=new Set(getItems().map(x=>x.id));
+    out.innerHTML=pls.length?('<div class="help">'+pls.length+'개 — 담을 것을 고르세요</div>'+
+      pls.map(p=>'<label class="pick'+(have.has(p.id)?' had':'')+'"><input type="checkbox" value="'+esc(p.id)+'"'+(have.has(p.id)?' checked disabled':'')+'>'+
+        '<span>'+esc(p.title)+' <span style="color:var(--dim2)">· '+p.count+'편 · '+CAT_NAME[autoCat(p)]+'</span></span></label>').join('')+
+      '<div style="display:flex;gap:6px;margin-top:10px"><button class="shBtn" data-act="pickAll" style="flex:1">전부 고르기</button>'+
+      '<button class="shBtn" data-act="addPicked" style="flex:1;background:var(--gold);color:#1f1d1a;font-weight:800">고른 것 담기</button></div>')
+      :'<div class="help">공개 재생목록이 없어요.</div>';
+  }catch(e){ out.innerHTML='<div class="help">불러오지 못했어요.</div>'; }
+}
+
+/* ===== 이벤트 ===== */
+$('tabs').addEventListener('click',e=>{ const b=e.target.closest('.tab'); if(!b) return; currentCat=b.dataset.cat; Store.set('sm_tab',currentCat); currentWho=''; Store.set('sm_who',''); render(); $('list').scrollTop=0; });
+$('whoRow').addEventListener('click',e=>{ const b=e.target.closest('.chip'); if(!b) return; currentWho=b.dataset.who; Store.set('sm_who',currentWho); render(); });
+$('list').addEventListener('click',e=>{
+  const m=e.target.closest('.more'); if(m){ openItemSheet(m.dataset.more); return; }
+  const c=e.target.closest('.main'); if(c) shareItem(c.dataset.id);
+});
+$('addBtn').addEventListener('click',async()=>{ const v=$('addInput').value; if(!v.trim()) return; await addFromText(v); $('addInput').value=''; });
+$('addInput').addEventListener('keydown',e=>{ if(e.key==='Enter') $('addBtn').click(); });
+$('pasteBtn').addEventListener('click',async()=>{
+  try{ const t=await navigator.clipboard.readText(); if(!t){ toast('복사된 링크가 없어요'); return; } await addFromText(t); }
+  catch(e){ toast('붙여넣기 권한이 없어요. 칸을 길게 눌러 붙여 넣어 주세요'); $('addInput').focus(); }
+});
+$('setBtn').addEventListener('click',openSettings);
+
+/* YouTube 공유 → 말씀 (홈 화면에 추가한 앱일 때) */
+(async function fromShare(){
+  const q=new URLSearchParams(location.search);
+  const text=[q.get('url'),q.get('text'),q.get('title')].filter(Boolean).join(' ');
+  if(!text) return;
+  history.replaceState(null,'',location.pathname);
+  await addFromText(text);
+})();
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+render();
+</script>
+</body>
+</html>

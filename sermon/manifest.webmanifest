@@ -1,0 +1,19 @@
+{
+  "name": "말씀",
+  "short_name": "말씀",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#1f1d1a",
+  "theme_color": "#2a2418",
+  "icons": [
+    {"src": "word-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "word-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "word-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ],
+  "share_target": {
+    "action": "./",
+    "method": "GET",
+    "params": {"title": "title", "text": "text", "url": "url"}
+  }
+}
