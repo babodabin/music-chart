@@ -323,6 +323,8 @@ const DEFAULT_OFFICIAL=[
   {url:'https://youtube.com/playlist?list=RDCLAK5uy_mJGVFXt0gqpyQkEb_Z7qfTYtTKUUsD_YE'},
   {url:'https://youtube.com/playlist?list=PLm_3vnTS-pvm1dVs_0kCY172S4VlmIh_R'},
   {url:'https://youtube.com/playlist?list=PLQtefrYeRXAXG2sZVdU0rAaPnVsBVBKRW'},
+  {url:'https://youtube.com/playlist?list=RDCLAK5uy_lBNUteBRencHzKelu5iDHwLF6mYqjL-JU'},
+  {url:'https://youtube.com/playlist?list=RDCLAK5uy_mjCKq8hnUQJqul0W6YW6x2Ep4P67jQ5Po'},
 ];
 const DEFAULT_PERIOD=[];
 /* 채널: name=표시 이름, url=채널 주소, team=같은 팀 묶음 이름(있으면 한 칸에 묶어 표시) */
@@ -362,13 +364,14 @@ const CH_ADD_VER=3;
   Store.set('chAddVer',CH_ADD_VER);
 })();
 /* 새로 추가한 기본 재생목록을, 이미 재생목록을 저장해 둔 폰에도 한 번만 덧붙임 (없는 것만) */
-const OFF_ADD_VER=2;
+const OFF_ADD_VER=3;
 (function mergeNewOfficial(){
-  if(Store.get('offAddVer',1)>=OFF_ADD_VER) return;
+  const ver=Store.get('offAddVer',1);
+  if(ver>=OFF_ADD_VER) return;
   const saved=Store.get('offPls',null);
   if(saved){
     const have=new Set(saved.map(p=>extractPlaylistId(p.url)));
-    DEFAULT_OFFICIAL.slice(2).forEach(p=>{ if(!have.has(extractPlaylistId(p.url))) saved.push(p); });
+    DEFAULT_OFFICIAL.slice(ver<2?2:14).forEach(p=>{ if(!have.has(extractPlaylistId(p.url))) saved.push(p); });
     Store.set('offPls',saved);
   }
   Store.set('offAddVer',OFF_ADD_VER);
