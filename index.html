@@ -37,7 +37,7 @@
   #titleBtn.open .arw{transform:rotate(180deg);}
   #menuDrop{flex:0 0 auto;margin:0 14px;background:var(--bg2);border-radius:14px;overflow:hidden;
     max-height:0;opacity:0;transition:max-height .3s ease,opacity .2s ease,margin .3s ease;}
-  #menuDrop.open{max-height:240px;opacity:1;margin:2px 14px 10px;}
+  #menuDrop.open{max-height:300px;opacity:1;margin:2px 14px 10px;}
   .mItem{display:flex;align-items:center;gap:12px;width:100%;border:none;background:none;color:var(--txt);
     font-size:15px;font-weight:600;padding:14px 16px;border-bottom:1px solid var(--line);text-align:left;}
   .mItem:last-child{border-bottom:none;}
@@ -219,6 +219,7 @@
     </div>
   </div>
   <div id="menuDrop">
+    <button class="mItem" data-tab="front"><span class="mi">🏆</span>순위 · 내 순위<span class="mc">›</span></button>
     <button class="mItem" data-tab="my"><span class="mi">⭐</span>내 음악<span class="mc">›</span></button>
     <button class="mItem" data-tab="official"><span class="mi">🎵</span>추천<span class="mc">›</span></button>
     <button class="mItem" data-tab="period"><span class="mi">📅</span>기간별<span class="mc">›</span></button>
@@ -426,6 +427,8 @@ async function ytFetch(endpoint, params){
 const MENU_TABS=['my','official','period','channel'];
 const MENU_NAMES={my:'⭐ 내 음악',official:'🎵 추천',period:'📅 기간별',channel:'📺 채널'};
 function goTab(tab){
+  if(tab==='front') tab=Store.get('lastFront','chart'); // 순위·내 순위 중 마지막에 보던 쪽으로
+  if(tab==='chart'||tab==='mychart') Store.set('lastFront',tab);
   currentTab=tab;
   closeMenu();
   renderTab();
@@ -437,9 +440,10 @@ function closeMenu(){ $('menuDrop').classList.remove('open'); $('titleBtn').clas
 $('titleBtn').addEventListener('click',()=>{ $('menuDrop').classList.contains('open')?closeMenu():openMenu(); });
 function syncNav(){
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===currentTab));
-  document.querySelectorAll('.mItem').forEach(x=>x.classList.toggle('on',x.dataset.tab===currentTab));
   const inMenu=MENU_TABS.includes(currentTab);
+  document.querySelectorAll('.mItem').forEach(x=>x.classList.toggle('on',x.dataset.tab===currentTab||(x.dataset.tab==='front'&&!inMenu)));
   $('subHead').classList.toggle('show',inMenu);
+  $('tabs').style.display=inMenu?'none':''; // 메뉴 화면에선 순위·내 순위 버튼 숨김
   if(inMenu){
     $('shName').textContent=MENU_NAMES[currentTab];
     $('shDots').innerHTML=MENU_TABS.map(t=>'<i class="'+(t===currentTab?'on':'')+'"></i>').join('');
@@ -693,25 +697,55 @@ function openCalSheet(period){
   }
   $('calSheet').classList.add('show');
 }
+function getMyView(){ return Store.get('myView','rank'); } // rank=순위, cal=달력
+/* 월간 달력: 날짜 누르면 그날 들은 노래 */
+function bindMonthCells(box){
+  box.querySelectorAll('.calCell[data-day]').forEach(cell=>cell.addEventListener('click',()=>{
+    const wasSel=cell.classList.contains('sel');
+    box.querySelectorAll('.calCell.sel').forEach(x=>x.classList.remove('sel'));
+    const list=$('calDayList');
+    if(wasSel){ list.innerHTML=''; return; }
+    cell.classList.add('sel');
+    const now=new Date();
+    const a=new Date(now.getFullYear(),now.getMonth(),parseInt(cell.dataset.day,10)).getTime();
+    const plays=playsBetween(a,a+86400000);
+    if(!plays.length){ list.innerHTML='<div class="wdNone" style="padding:10px 2px 4px;">이날은 들은 노래가 없어요.</div>'; return; }
+    const uniq=[];
+    plays.forEach(pl=>{ let u=uniq.find(x=>x.vid===pl.vid); if(!u){ u={...pl,count:0}; uniq.push(u); } u.count++; });
+    list.innerHTML='<div style="height:10px"></div>'+uniq.map((u,i)=>rowHtmlCount(i+1,u.vid,u.title,u.artist,u.thumb,u.count)).join('');
+  }));
+}
 function renderMyChart(){
   const c=$('content');
   const period=getMyPeriod();
+  const view=getMyView();
   c.innerHTML=
-    '<div class="segBar">'+
+    '<div class="segBar" id="viewBar">'+
+      '<button class="segBtn '+(view==='rank'?'active':'')+'" data-view="rank">🏆 순위</button>'+
+      '<button class="segBtn '+(view==='cal'?'active':'')+'" data-view="cal">📅 달력</button>'+
+    '</div>'+
+    '<div class="segBar" id="perBar">'+
       '<button class="segBtn '+(period==='year'?'active':'')+'" data-per="year">연간</button>'+
       '<button class="segBtn '+(period==='month'?'active':'')+'" data-per="month">월간</button>'+
       '<button class="segBtn '+(period==='week'?'active':'')+'" data-per="week">주간</button>'+
     '</div>'+
     '<div id="swipeHint">← 좌우로 밀어서 전환 →</div>'+
     '<div id="myChartBody"></div>';
-  c.querySelectorAll('.segBtn').forEach(b=>b.addEventListener('click',()=>{
-    // 버튼을 누르면 그 기간의 달력 화면이 새로 열림 (슬라이드로 닫으면 순위 화면)
-    if(b.dataset.per!==getMyPeriod()){ Store.set('myPeriod',b.dataset.per); renderMyChart(); }
-    openCalSheet(b.dataset.per);
+  c.querySelectorAll('#viewBar .segBtn').forEach(b=>b.addEventListener('click',()=>{
+    if(b.dataset.view!==getMyView()){ Store.set('myView',b.dataset.view); renderMyChart(); }
   }));
-  // 순위 (기존 기능)
-  const ranked=rankByPeriod(period);
+  c.querySelectorAll('#perBar .segBtn').forEach(b=>b.addEventListener('click',()=>{
+    if(b.dataset.per!==getMyPeriod()){ Store.set('myPeriod',b.dataset.per); renderMyChart(); }
+  }));
   const body=$('myChartBody');
+  // 달력 보기
+  if(view==='cal'){
+    body.innerHTML=period==='week'?calWeekHtml():period==='month'?calMonthHtml():calYearHtml();
+    if(period==='month') bindMonthCells(body);
+    return;
+  }
+  // 순위 보기
+  const ranked=rankByPeriod(period);
   const perName=period==='year'?'연간':period==='month'?'월간':'주간';
   if(ranked.length===0){
     body.innerHTML='<div class="emptyMsg"><div class="big">🏆</div>아직 기록이 없어요.<br>▶ 나  🎵 를 누르면 들은 만큼<br>여기 내 순위가 쌓여요.</div>';
