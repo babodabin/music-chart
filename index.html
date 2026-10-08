@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>마이 뮤직</title>
-<meta name="theme-color" content="#0a0a0a">
+<meta name="theme-color" content="#3a2232">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -14,17 +14,18 @@
 <link rel="icon" type="image/png" sizes="512x512" href="mymusic-512.png?v=2">
 <style>
   :root{
-    --bg:#0a0a0a; --bg2:#161616; --bg3:#222; --line:#2a2a2a;
+    --bg:#231f22; --bg2:rgba(255,255,255,.07); --bg3:rgba(255,255,255,.12); --line:rgba(255,255,255,.09);
+    --glow:radial-gradient(120% 60% at 70% 0%,#6b2e4f 0%,#3a2232 45%,#231f22 100%) fixed #231f22;
     --txt:#f2f2f2; --dim:#9a9a9a; --dim2:#6a6a6a;
-    --red:#ff0033; --reddim:#cc0029;
+    --red:#f0609a; --reddim:#d94c86;
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{height:100%;overflow:hidden;}
   body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-    background:var(--bg);color:var(--txt);display:flex;flex-direction:column;height:100dvh;
+    background:var(--glow);color:var(--txt);display:flex;flex-direction:column;height:100dvh;
     user-select:none;-webkit-user-select:none;}
   #header{flex:0 0 auto;padding:calc(env(safe-area-inset-top) + 12px) 16px 6px;
-    display:flex;align-items:center;justify-content:space-between;background:var(--bg);}
+    display:flex;align-items:center;justify-content:space-between;background:transparent;}
   #header h1{font-size:22px;font-weight:800;letter-spacing:-.5px;}
   #header h1 span{color:var(--red);}
   #headBtns{display:flex;gap:6px;}
@@ -46,7 +47,7 @@
   .mItem .mc{margin-left:auto;color:var(--dim2);font-size:16px;}
   .mItem.on{color:var(--red);}
   /* 탭 — 순위 / 내 순위 두 개만, 화면 안에 딱 맞게 */
-  #tabs{flex:0 0 auto;display:flex;gap:8px;padding:6px 14px 10px;background:var(--bg);}
+  #tabs{flex:0 0 auto;display:flex;gap:8px;padding:6px 14px 10px;background:transparent;}
   .tab{flex:1 1 0;background:var(--bg2);border:none;border-radius:14px;color:var(--dim);
     font-size:15px;font-weight:700;padding:12px 0;white-space:nowrap;transition:background .15s;}
   /* 메뉴 화면(내 음악·추천·기간별·채널) 이름 + 위치 점 */
@@ -95,12 +96,12 @@
   .btnPair{flex:0 0 auto;display:flex;align-items:center;gap:5px;}
   .bYT,.bYM{width:34px;height:34px;border-radius:50%;border:none;
     display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
-  .bYT{background:var(--red);color:#fff;font-size:13px;padding-left:2px;}
+  .bYT{background:rgba(255,255,255,.09);color:#ff6b8b;font-size:13px;padding-left:2px;}
   .bYT:active{background:var(--reddim);transform:scale(.9);}
-  .bYM{background:#fff;font-size:16px;box-shadow:0 0 0 2px rgba(255,255,255,.18);}
+  .bYM{background:rgba(255,255,255,.09);color:#eee;font-size:17px;}
   .bYM:active{transform:scale(.9);}
   /* 곡 상세 시트 */
-  #dtSheet{position:fixed;inset:0;z-index:45;background:var(--bg);display:none;flex-direction:column;
+  #dtSheet{position:fixed;inset:0;z-index:45;background:var(--glow);display:none;flex-direction:column;
     padding-top:env(safe-area-inset-top);}
   #dtSheet.show{display:flex;}
   #dtHead{flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);}
@@ -116,13 +117,13 @@
   .dtActs{display:flex;gap:7px;margin-top:16px;}
   .dtBtn{flex:1;border:none;border-radius:12px;font-size:13px;font-weight:700;padding:13px 4px;
     display:flex;align-items:center;justify-content:center;gap:5px;}
-  .dtBtn.yt{background:var(--red);color:#fff;}
-  .dtBtn.yt:active{background:var(--reddim);}
-  .dtBtn.ym{background:#fff;color:#111;}
-  .dtBtn.ym:active{background:#ddd;}
+  .dtBtn.yt{background:rgba(255,255,255,.09);color:#ff6b8b;}
+  .dtBtn.yt:active{background:rgba(255,255,255,.18);}
+  .dtBtn.ym{background:rgba(255,255,255,.09);color:#eee;}
+  .dtBtn.ym:active{background:rgba(255,255,255,.18);}
   .dtDescT{font-size:12px;color:var(--dim2);font-weight:700;margin:22px 0 7px;}
   /* 달력 전체화면 시트 */
-  #calSheet{position:fixed;inset:0;z-index:44;background:var(--bg);display:none;flex-direction:column;
+  #calSheet{position:fixed;inset:0;z-index:44;background:var(--glow);display:none;flex-direction:column;
     padding-top:env(safe-area-inset-top);}
   #calSheet.show{display:flex;}
   .calSheetHead{flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);}
@@ -171,7 +172,7 @@
   .secError b{color:var(--red);}
   .emptyMsg{padding:50px 24px;text-align:center;color:var(--dim);font-size:14px;line-height:1.8;}
   .emptyMsg .big{font-size:40px;margin-bottom:12px;}
-  #plModal{position:fixed;inset:0;z-index:40;background:var(--bg);display:none;flex-direction:column;
+  #plModal{position:fixed;inset:0;z-index:40;background:var(--glow);display:none;flex-direction:column;
     padding-top:env(safe-area-inset-top);}
   #plModal.show{display:flex;}
   #plModalHead{flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);}
@@ -179,7 +180,7 @@
   #plModalHead .pmTitle{flex:1;font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   #plModalHead .pmOpen{border:none;font-size:12px;color:#fff;background:var(--red);font-weight:600;padding:7px 12px;border-radius:8px;}
   #plModalList{flex:1;overflow-y:auto;padding:6px 0 calc(env(safe-area-inset-bottom) + 16px);}
-  #setModal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.96);display:none;
+  #setModal{position:fixed;inset:0;z-index:50;background:rgba(35,31,34,.97);display:none;
     flex-direction:column;padding:env(safe-area-inset-top) 0 0;}
   #setModal.show{display:flex;}
   #setHead{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);}
@@ -508,7 +509,7 @@ function chRowHtml(ch,i){
   const img=info&&info.thumb?'<img class="chImg" src="'+info.thumb+'" loading="lazy">':'<div class="chImg"></div>';
   const sub=info&&info.title?info.title:'';
   return '<div class="chRow" data-i="'+i+'">'+img+'<div class="chInfo"><div class="chName">'+esc(ch.name)+'</div><div class="chSub">'+esc(sub)+'</div></div>'
-    +'<div class="btnPair"><button class="bYT chYT" title="유튜브 앱에서 열기">▶</button><button class="bYM chYM" title="유튜브 뮤직 앱에서 열기">🎵</button></div></div>';
+    +'<div class="btnPair"><button class="bYT chYT" title="유튜브 앱에서 열기">▶\uFE0E</button><button class="bYM chYM" title="유튜브 뮤직 앱에서 열기">♫</button></div></div>';
 }
 function renderChannels(){
   const c=$('content');
@@ -748,7 +749,7 @@ function renderMyChart(){
   const ranked=rankByPeriod(period);
   const perName=period==='year'?'연간':period==='month'?'월간':'주간';
   if(ranked.length===0){
-    body.innerHTML='<div class="emptyMsg"><div class="big">🏆</div>아직 기록이 없어요.<br>▶ 나  🎵 를 누르면 들은 만큼<br>여기 내 순위가 쌓여요.</div>';
+    body.innerHTML='<div class="emptyMsg"><div class="big">🏆</div>아직 기록이 없어요.<br>▶ 나 ♫ 를 누르면 들은 만큼<br>여기 내 순위가 쌓여요.</div>';
     return;
   }
   let html='<div class="calSecT">'+perName+' 순위</div>';
@@ -765,7 +766,7 @@ function renderMyChart(){
 
 /* 빨강 ▶ = 유튜브 / 흰색 🎵 = 유튜브 뮤직 */
 function btnPairHtml(){
-  return '<div class="btnPair"><button class="bYT" title="유튜브에서 재생">▶</button><button class="bYM" title="유튜브 뮤직에서 재생">🎵</button></div>';
+  return '<div class="btnPair"><button class="bYT" title="유튜브에서 재생">▶\uFE0E</button><button class="bYM" title="유튜브 뮤직에서 재생">♫</button></div>';
 }
 function rowHtml(n,vid,title,artist,thumb){
   return '<div class="rankRow" data-vid="'+vid+'" data-title="'+esc(title)+'" data-artist="'+esc(artist)+'" data-thumb="'+(thumb||'')+'"><div class="rankNum'+(n<=3?' top':'')+'">'+n+'</div><img class="rankThumb" src="'+(thumb||'')+'" loading="lazy"><div class="rankInfo"><div class="rankTitle">'+esc(title)+'</div><div class="rankArtist">'+esc(artist)+'</div></div>'+btnPairHtml()+'</div>';
@@ -914,7 +915,7 @@ async function openDetail(vid,title,artist,thumb,plid,genre){
   dtCur={vid,title,artist,thumb,plid,genre:genre||''};
   const head='<img class="dtImg" src="https://i.ytimg.com/vi/'+vid+'/hqdefault.jpg" onerror="this.style.display=\'none\'">'
     +'<div class="dtWrap"><div class="dtTitle">'+esc(title)+'</div><div class="dtArtist">'+esc(artist)+'</div>'
-    +'<div class="dtActs"><button class="dtBtn yt" id="dtYT">▶ 유튜브</button><button class="dtBtn ym" id="dtYM">🎵 유튜브 뮤직</button></div>'
+    +'<div class="dtActs"><button class="dtBtn yt" id="dtYT">▶\uFE0E 유튜브</button><button class="dtBtn ym" id="dtYM">♫ 유튜브 뮤직</button></div>'
     +'<div id="dtExtra"><div class="dtDescT">정보 불러오는 중…</div></div></div>';
   $('dtBody').innerHTML=head;
   $('dtBody').scrollTop=0;
