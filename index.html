@@ -47,16 +47,11 @@
   .mItem .mc{margin-left:auto;color:var(--dim2);font-size:16px;}
   .mItem.on{color:var(--red);}
   /* 탭 — 순위 / 내 순위 두 개만, 화면 안에 딱 맞게 */
-  #tabs{flex:0 0 auto;display:flex;gap:8px;padding:6px 14px 10px;background:transparent;}
+  .tabRow{flex:0 0 auto;display:flex;gap:8px;padding:6px 14px 10px;background:transparent;}
+  .tabRow.four{gap:6px;}
+  .tabRow.four .tab{font-size:13px;padding:11px 0;border-radius:12px;}
   .tab{flex:1 1 0;background:var(--bg2);border:none;border-radius:14px;color:var(--dim);
     font-size:15px;font-weight:700;padding:12px 0;white-space:nowrap;transition:background .15s;}
-  /* 메뉴 화면(내 음악·추천·기간별·채널) 이름 + 위치 점 */
-  #subHead{flex:0 0 auto;display:none;align-items:center;justify-content:space-between;padding:0 18px 8px;}
-  #subHead.show{display:flex;}
-  #subHead .shName{font-size:17px;font-weight:800;}
-  #subHead .dots{display:flex;gap:6px;}
-  #subHead .dots i{width:7px;height:7px;border-radius:50%;background:var(--bg3);display:block;}
-  #subHead .dots i.on{background:var(--red);}
   /* 채널 */
   .chList{padding:4px 16px;}
   .chGroup{background:var(--bg2);border-radius:14px;margin-bottom:10px;overflow:hidden;}
@@ -220,17 +215,19 @@
     </div>
   </div>
   <div id="menuDrop">
-    <button class="mItem" data-tab="front"><span class="mi">🏆</span>순위 · 내 순위<span class="mc">›</span></button>
-    <button class="mItem" data-tab="my"><span class="mi">⭐</span>내 음악<span class="mc">›</span></button>
-    <button class="mItem" data-tab="official"><span class="mi">🎵</span>추천<span class="mc">›</span></button>
-    <button class="mItem" data-tab="period"><span class="mi">📅</span>기간별<span class="mc">›</span></button>
-    <button class="mItem" data-tab="channel"><span class="mi">📺</span>채널<span class="mc">›</span></button>
+    <button class="mItem" data-tab="front"><span class="mi">🏆</span>순위<span class="mc">›</span></button>
+    <button class="mItem" data-tab="songs"><span class="mi">🎵</span>내 노래<span class="mc">›</span></button>
   </div>
-  <div id="tabs">
-    <button class="tab active" data-tab="chart">순위</button>
-    <button class="tab" data-tab="mychart">내 순위</button>
+  <div id="tabs" class="tabRow">
+    <button class="tab active" data-tab="chart">🏆 순위</button>
+    <button class="tab" data-tab="mychart">🎧 내 순위</button>
   </div>
-  <div id="subHead"><span class="shName" id="shName"></span><span class="dots" id="shDots"></span></div>
+  <div id="tabs2" class="tabRow four">
+    <button class="tab" data-tab="my">⭐ 내 음악</button>
+    <button class="tab" data-tab="official">🎵 추천</button>
+    <button class="tab" data-tab="period">📅 기간별</button>
+    <button class="tab" data-tab="channel">📺 채널</button>
+  </div>
   <div id="content"></div>
   <div id="plModal">
     <div id="plModalHead">
@@ -426,10 +423,11 @@ async function ytFetch(endpoint, params){
 }
 /* 화면 묶음: 앞(순위·내 순위) / 메뉴(내 음악·추천·기간별·채널) */
 const MENU_TABS=['my','official','period','channel'];
-const MENU_NAMES={my:'⭐ 내 음악',official:'🎵 추천',period:'📅 기간별',channel:'📺 채널'};
 function goTab(tab){
-  if(tab==='front') tab=Store.get('lastFront','chart'); // 순위·내 순위 중 마지막에 보던 쪽으로
+  if(tab==='front') tab=Store.get('lastFront','chart'); // 순위 쪽: 마지막에 보던 탭으로
+  if(tab==='songs') tab=Store.get('lastSong','my');     // 내 노래 쪽: 마지막에 보던 탭으로
   if(tab==='chart'||tab==='mychart') Store.set('lastFront',tab);
+  if(MENU_TABS.includes(tab)) Store.set('lastSong',tab);
   currentTab=tab;
   closeMenu();
   renderTab();
@@ -442,13 +440,9 @@ $('titleBtn').addEventListener('click',()=>{ $('menuDrop').classList.contains('o
 function syncNav(){
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===currentTab));
   const inMenu=MENU_TABS.includes(currentTab);
-  document.querySelectorAll('.mItem').forEach(x=>x.classList.toggle('on',x.dataset.tab===currentTab||(x.dataset.tab==='front'&&!inMenu)));
-  $('subHead').classList.toggle('show',inMenu);
-  $('tabs').style.display=inMenu?'none':''; // 메뉴 화면에선 순위·내 순위 버튼 숨김
-  if(inMenu){
-    $('shName').textContent=MENU_NAMES[currentTab];
-    $('shDots').innerHTML=MENU_TABS.map(t=>'<i class="'+(t===currentTab?'on':'')+'"></i>').join('');
-  }
+  document.querySelectorAll('.mItem').forEach(x=>x.classList.toggle('on',x.dataset.tab===(inMenu?'songs':'front')));
+  $('tabs').style.display=inMenu?'none':'';   // 순위 쪽 탭
+  $('tabs2').style.display=inMenu?'':'none';  // 내 노래 쪽 탭
 }
 function renderTab(){
   const c=$('content');
