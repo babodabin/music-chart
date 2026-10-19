@@ -876,7 +876,7 @@ async function renderPlaylistGrid(pls, label){
   try{
     const ids=pls.map(p=>extractPlaylistId(p.url)).filter(Boolean);
     if(ids.length===0){ c.innerHTML='<div class="secError">재생목록 링크를 인식하지 못했어요.</div>'; return; }
-    const data=await ytFetch('playlists',{ part:'snippet,contentDetails', id:ids.join(','), maxResults:'50' });
+    const data=await ytFetch('playlists',{ part:'snippet,contentDetails', id:ids.join(','), maxResults:'50', hl:'ko' });
     let items=data.items||[];
     // 채널로 옮긴 '나비워십 업로드' 재생목록은 재생목록 탭에서 빼고 저장 목록에서도 지움
     const drop=items.filter(it=>/^Uploads from NaviWorship/i.test((it.snippet&&it.snippet.title)||'')).map(it=>it.id);
@@ -885,6 +885,8 @@ async function renderPlaylistGrid(pls, label){
       ['myPls','offPls','perPls'].forEach(k=>{ const cur=Store.get(k,null); if(cur){ const nx=cur.filter(p=>!drop.includes(extractPlaylistId(p.url))); if(nx.length!==cur.length) Store.set(k,nx); } });
     }
     if(items.length===0){ c.innerHTML='<div class="secError">재생목록을 찾지 못했어요. (비공개이거나 자동 생성 목록일 수 있어요)</div>'; return; }
+    // 한국어 제목이 있으면 그걸로 보여줌 (예: Crypt of Death → 지하를 울리는 데스메탈)
+    items.forEach(it=>{ const lo=it.snippet&&it.snippet.localized; if(lo&&lo.title) it.snippet.title=lo.title; });
     const sorted=sortGridItems(items, pls, getGridSort());
     let html='<div class="sortBar" id="gridSortBar">'+sortBarHtml(getGridSort())+'</div>';
     html+='<div class="plGrid">';
