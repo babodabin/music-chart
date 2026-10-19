@@ -349,16 +349,19 @@ const DEFAULT_CHANNELS=[
   {name:'Shiloh Dynasty', url:'https://www.youtube.com/@shilohdynasty1059'},
   {name:'樂來樂愛Music', url:'https://www.youtube.com/channel/UCaPCKsRDeDaSIwJEa64a_5A'},
   {name:'Chill girl Vibes', url:'https://www.youtube.com/channel/UCF3RacYoFkW7MV6QKCpC6wQ'},
+  {name:'Redlist China', url:'https://www.youtube.com/@redlistchina4982'},
+  {name:'Redlist - Timeless Music', url:'https://www.youtube.com/@redlist-timelessmusic606'},
 ];
 function getChannels(){ return Store.get('channels', DEFAULT_CHANNELS); }
 /* 새로 추가한 기본 채널을, 이미 채널 목록을 저장해 둔 폰에도 한 번만 덧붙임 (지운 건 다시 안 넣음) */
-const CH_ADD_VER=3;
+const CH_ADD_VER=4;
 (function mergeNewChannels(){
-  if(Store.get('chAddVer',1)>=CH_ADD_VER) return;
+  const ver=Store.get('chAddVer',1);
+  if(ver>=CH_ADD_VER) return;
   const saved=Store.get('channels',null);
   if(saved){
     const have=new Set(saved.map(c=>(c.url||'').toLowerCase()));
-    DEFAULT_CHANNELS.slice(18).forEach(c=>{ if(!have.has(c.url.toLowerCase())) saved.push(c); });
+    DEFAULT_CHANNELS.slice(ver<2?11:ver<3?18:20).forEach(c=>{ if(!have.has(c.url.toLowerCase())) saved.push(c); });
     Store.set('channels',saved);
   }
   Store.set('chAddVer',CH_ADD_VER);
