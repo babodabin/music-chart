@@ -227,8 +227,8 @@
     <button class="tab" data-tab="mychart">🎧 내 순위</button>
   </div>
   <div id="tabs2" class="tabRow four">
-    <button class="tab" data-tab="my">⭐ 내 음악</button>
-    <button class="tab" data-tab="period">💭 내 생각</button>
+    <button class="tab" data-tab="my">🎤 팝</button>
+    <button class="tab" data-tab="period">🎸 인디</button>
     <button class="tab" data-tab="official">🎵 재생목록</button>
     <button class="tab" data-tab="channel">📺 채널</button>
   </div>
@@ -263,10 +263,10 @@
       <input class="setInput" id="apiKeyInput" type="text" placeholder="여기에 API 키 붙여넣기" autocomplete="off" autocorrect="off" autocapitalize="off">
       <div class="setHelp">구글 클라우드에서 발급받은 키예요. 한 번 넣으면 이 폰에 저장됩니다.</div>
       <button class="setBtn" id="saveKeyBtn">키 저장</button>
-      <div class="setLabel">⭐ 내 음악 재생목록</div>
+      <div class="setLabel">🎤 팝 재생목록</div>
       <div class="plAddRow"><input class="setInput" id="myPlInput" type="text" placeholder="재생목록 링크 붙여넣기" autocomplete="off"><button id="myPlAdd">추가</button></div>
       <div id="myPlList"></div>
-      <div class="setLabel">💭 내 생각 (내가 만든 재생목록)</div>
+      <div class="setLabel">🎸 인디 재생목록</div>
       <div class="plAddRow"><input class="setInput" id="perPlInput" type="text" placeholder="재생목록 링크 붙여넣기" autocomplete="off"><button id="perPlAdd">추가</button></div>
       <div id="perPlList"></div>
       <div class="setLabel">🎵 재생목록 (가져온 재생목록)</div>
@@ -305,8 +305,40 @@ const Store=(()=>{
     }
   };
 })();
+/* 팝: 다빈 YouTube의 [Pop] 재생목록 (댄스·발라드·레트로·모던록·락·힙합 × 연도) */
 const DEFAULT_MY=[
-  {url:'https://music.youtube.com/playlist?list=PLzEyMy1AnSInmHSmfojyFQ8uL9qx7G5lY'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSInmHSmfojyFQ8uL9qx7G5lY'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSInaPBxrMrIM18tKsTDCnytg'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSIlGexJ9qly5_Svu67fQWZP4'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSInsrA9uXUihBF69-VyyEZcZ'},
+  {url:'https://www.youtube.com/playlist?list=PLJR5aaA_eul8'},
+  {url:'https://www.youtube.com/playlist?list=PLRkydgHcL1OI'},
+  {url:'https://www.youtube.com/playlist?list=PLLRVV-I0YBZI'},
+  {url:'https://www.youtube.com/playlist?list=PLZFWzfvRGeWE'},
+  {url:'https://www.youtube.com/playlist?list=PLSfekc4ORPGY'},
+  {url:'https://www.youtube.com/playlist?list=PLSpL8sYSj1Rs'},
+  {url:'https://www.youtube.com/playlist?list=PLApg1Jr3WNVo'},
+  {url:'https://www.youtube.com/playlist?list=PLZPBqe2U_rHA'},
+  {url:'https://www.youtube.com/playlist?list=PLPwsJLmHXRIg'},
+  {url:'https://www.youtube.com/playlist?list=PLODZboKjqq9c'},
+  {url:'https://www.youtube.com/playlist?list=PLSqAGlXFD4GQ'},
+  {url:'https://www.youtube.com/playlist?list=PLcdirR8RqT18'},
+  {url:'https://www.youtube.com/playlist?list=PLLRU5j74jS3k'},
+  {url:'https://www.youtube.com/playlist?list=PLNySpj3CRSjI'},
+  {url:'https://www.youtube.com/playlist?list=PLJmaL6upZw1I'},
+  {url:'https://www.youtube.com/playlist?list=PLJhtmwsL4Hvg'},
+  {url:'https://www.youtube.com/playlist?list=PLb_WcspJkENk'},
+  {url:'https://www.youtube.com/playlist?list=PLPyqKqLadqeo'},
+  {url:'https://www.youtube.com/playlist?list=PLQL-NQNPj8XU'},
+  {url:'https://www.youtube.com/playlist?list=PLDfcRVj6TvNU'},
+  {url:'https://www.youtube.com/playlist?list=PLYhDGEqLnHy8'},
+  {url:'https://www.youtube.com/playlist?list=PLTCRH59Ez4e4'},
+  {url:'https://www.youtube.com/playlist?list=PLFCJjGG08dZY'},
+  {url:'https://www.youtube.com/playlist?list=PLd9kV9Cf2k0Y'},
+  {url:'https://www.youtube.com/playlist?list=PLP8VpqcGzqes'},
+  {url:'https://www.youtube.com/playlist?list=PLeww8r10bzAY'},
+  {url:'https://www.youtube.com/playlist?list=PLUzbfztRc4ps'},
+  {url:'https://www.youtube.com/playlist?list=PLTi-ewA84xMs'},
 ];
 const DEFAULT_OFFICIAL=[
   {url:'https://youtube.com/playlist?list=RDCLAK5uy_l7wbVbkC-dG5fyEQQsBfjm_z3dLAhYyvo'},
@@ -326,7 +358,27 @@ const DEFAULT_OFFICIAL=[
   {url:'https://youtube.com/playlist?list=RDCLAK5uy_lBNUteBRencHzKelu5iDHwLF6mYqjL-JU'},
   {url:'https://youtube.com/playlist?list=RDCLAK5uy_mjCKq8hnUQJqul0W6YW6x2Ep4P67jQ5Po'},
 ];
-const DEFAULT_PERIOD=[];
+/* 인디: 다빈 YouTube의 [Indie] 재생목록 (retro·warm·melancholy·인디락·인디힙합 × 연도) */
+const DEFAULT_PERIOD=[
+  {url:'https://www.youtube.com/playlist?list=PLUl2NMKLNbiQ'},
+  {url:'https://www.youtube.com/playlist?list=PLL41Dhqkju7g'},
+  {url:'https://www.youtube.com/playlist?list=PLEJTgkokMc_0'},
+  {url:'https://www.youtube.com/playlist?list=PLZHCxbr7hSyE'},
+  {url:'https://www.youtube.com/playlist?list=PLY7AEu2vn8UA'},
+  {url:'https://www.youtube.com/playlist?list=PLItnKklWOF3s'},
+  {url:'https://www.youtube.com/playlist?list=PLd-uHe-VZ56A'},
+  {url:'https://www.youtube.com/playlist?list=PLb8Y8UncAZEo'},
+  {url:'https://www.youtube.com/playlist?list=PLLTg5J6n-tCw'},
+  {url:'https://www.youtube.com/playlist?list=PLB_zRmwxTSBE'},
+  {url:'https://www.youtube.com/playlist?list=PLM_VUt2jD5F4'},
+  {url:'https://www.youtube.com/playlist?list=PLRsTWhLU8O2A'},
+  {url:'https://www.youtube.com/playlist?list=PLQvmklflQC4Q'},
+  {url:'https://www.youtube.com/playlist?list=PLCPQsw2iMTdk'},
+  {url:'https://www.youtube.com/playlist?list=PLFzcKqsfNWiw'},
+  {url:'https://www.youtube.com/playlist?list=PLI8k840fgZYw'},
+  {url:'https://www.youtube.com/playlist?list=PLDMpYUXnbqdg'},
+  {url:'https://www.youtube.com/playlist?list=PLP35sfl4IOt0'},
+];
 /* 채널: name=표시 이름, url=채널 주소, team=같은 팀 묶음 이름(있으면 한 칸에 묶어 표시) */
 const DEFAULT_CHANNELS=[
   {name:'나비워십', url:'https://www.youtube.com/@naviworship'},
@@ -395,6 +447,13 @@ const OFF_ADD_VER=3;
     }
   }
   Store.set('mineMoved',true);
+})();
+/* 내 음악→팝, 내 생각→인디로 바꾸면서, 폰에 저장된 두 목록을 새 기본 목록으로 한 번만 교체 */
+(function popIndieSwap(){
+  if(Store.get('popIndieVer',0)>=1) return;
+  if(Store.get('myPls',null)) Store.set('myPls',DEFAULT_MY);
+  if(Store.get('perPls',null)) Store.set('perPls',DEFAULT_PERIOD);
+  Store.set('popIndieVer',1);
 })();
 function getApiKey(){ return Store.get('apiKey',''); }
 function getMyPls(){ return Store.get('myPls', DEFAULT_MY); }
@@ -493,7 +552,7 @@ async function ytFetch(endpoint, params){
   if(data.error){ throw {api:data.error}; }
   return data;
 }
-/* 화면 묶음: 앞(순위·내 순위) / 메뉴(내 음악·내 생각·재생목록·채널) */
+/* 화면 묶음: 앞(순위·내 순위) / 메뉴(팝·인디·재생목록·채널) */
 const MENU_TABS=['my','period','official','channel'];
 function goTab(tab){
   if(tab==='front') tab=Store.get('lastFront','chart'); // 순위 쪽: 마지막에 보던 탭으로
@@ -527,9 +586,9 @@ function renderTab(){
     return;
   }
   if(currentTab==='chart'){ renderChart(); }
-  else if(currentTab==='my'){ renderPlaylistGrid(getMyPls(),'내 음악'); }
+  else if(currentTab==='my'){ renderPlaylistGrid(getMyPls(),'팝'); }
   else if(currentTab==='official'){ renderPlaylistGrid(getOffPls(),'재생목록'); }
-  else if(currentTab==='period'){ renderPlaylistGrid(getPerPls(),'내 생각'); }
+  else if(currentTab==='period'){ renderPlaylistGrid(getPerPls(),'인디'); }
 }
 
 /* ===== 채널 ===== */
@@ -889,7 +948,7 @@ async function renderPlaylistGrid(pls, label){
     }
     if(items.length===0){ c.innerHTML='<div class="secError">재생목록을 찾지 못했어요. (비공개이거나 자동 생성 목록일 수 있어요)</div>'; return; }
     // 한국어 제목이 있으면 그걸로 보여줌 (예: Crypt of Death → 지하를 울리는 데스메탈)
-    items.forEach(it=>{ const lo=it.snippet&&it.snippet.localized; if(lo&&lo.title) it.snippet.title=lo.title; });
+    items.forEach(it=>{ const lo=it.snippet&&it.snippet.localized; if(lo&&lo.title) it.snippet.title=lo.title; it.snippet.title=it.snippet.title.replace(/^\[(Pop|Indie)\]\s*/i,''); });
     const sorted=sortGridItems(items, pls, getGridSort());
     let html='<div class="sortBar" id="gridSortBar">'+sortBarHtml(getGridSort())+'</div>';
     html+='<div class="plGrid">';
@@ -980,7 +1039,7 @@ function ctxPlid(el){
   return '';
 }
 function ctxGenre(el){
-  // 내 음악 재생목록 안에서 튼 곡만 장르를 알 수 있음
+  // 팝·인디 재생목록 안에서 튼 곡만 장르를 알 수 있음
   return (el && el.closest('#plModalList')) ? curPlGenre : '';
 }
 function fmtNum(n){
@@ -1079,7 +1138,7 @@ $('dtSheet').addEventListener('touchend',e=>{
   if(Math.abs(dx)<Math.abs(dy)*1.5) return;
   $('dtSheet').classList.remove('show');
 },{passive:true});
-/* 좌우 스와이프 — 앞 5칸(한국·미국·연간·월간·주간) / 메뉴 4칸(내 음악·내 생각·재생목록·채널) 각각 순환 */
+/* 좌우 스와이프 — 앞 5칸(한국·미국·연간·월간·주간) / 메뉴 4칸(팝·인디·재생목록·채널) 각각 순환 */
 const FRONT_STEPS=[['chart','KR'],['chart','GL'],['mychart','year'],['mychart','month'],['mychart','week']];
 function frontIndex(){
   if(currentTab==='chart') return getRegion()==='GL'?1:0;
