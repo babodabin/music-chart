@@ -627,7 +627,7 @@ function renderChart(){
   c.innerHTML=
     '<div class="segBar">'+
       '<button class="segBtn '+(getRegion()==='KR'?'active':'')+'" data-reg="KR">🇰🇷 한국</button>'+
-      '<button class="segBtn '+(getRegion()==='GL'?'active':'')+'" data-reg="GL">🌐 글로벌</button>'+
+      '<button class="segBtn '+(getRegion()==='GL'?'active':'')+'" data-reg="GL">🇺🇸 미국</button>'+
     '</div>'+
     '<div id="swipeHint">← 좌우로 밀어서 전환 →</div>'+
     '<div id="chartBody"><div class="secLoading">불러오는 중…</div></div>';
@@ -637,10 +637,10 @@ function renderChart(){
   }));
   loadChart();
 }
-// 순위 차트 재생목록 (한국/글로벌 인기곡 TOP100)
+// 순위 차트 재생목록 (한국/미국 인기곡 TOP100). 'GL' 칸은 예전 글로벌 자리라 이름만 그대로 둠
 const CHART_PL={
   KR:'PL4fGSI1pDJn6jXS_Tv_N9B8Z0HTRVJE0m',
-  GL:'PL4fGSI1pDJn6puJdseH2Rt9sMvt9E2M4i'
+  GL:'PL4fGSI1pDJn6O1LS0XSdF3RyO0Rq_LDeI'
 };
 async function loadChart(){
   const body=$('chartBody'); if(!body)return;
@@ -1074,7 +1074,7 @@ $('dtSheet').addEventListener('touchend',e=>{
   if(Math.abs(dx)<Math.abs(dy)*1.5) return;
   $('dtSheet').classList.remove('show');
 },{passive:true});
-/* 좌우 스와이프 — 앞 5칸(한국·글로벌·연간·월간·주간) / 메뉴 4칸(내 음악·내 생각·재생목록·채널) 각각 순환 */
+/* 좌우 스와이프 — 앞 5칸(한국·미국·연간·월간·주간) / 메뉴 4칸(내 음악·내 생각·재생목록·채널) 각각 순환 */
 const FRONT_STEPS=[['chart','KR'],['chart','GL'],['mychart','year'],['mychart','month'],['mychart','week']];
 function frontIndex(){
   if(currentTab==='chart') return getRegion()==='GL'?1:0;
