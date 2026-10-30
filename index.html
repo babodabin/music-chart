@@ -211,6 +211,23 @@
     background:var(--bg3);border:1px solid var(--line);color:var(--txt);font-size:13px;font-weight:500;
     padding:10px 18px;border-radius:20px;opacity:0;transition:all .25s;z-index:60;pointer-events:none;white-space:nowrap;max-width:90vw;}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  /* 앱 안 연속 재생 */
+  #player{position:fixed;left:0;right:0;bottom:0;z-index:48;background:rgba(30,26,29,.97);border-top:1px solid var(--line);
+    padding:8px 12px calc(env(safe-area-inset-bottom) + 8px);display:none;box-shadow:0 -8px 24px rgba(0,0,0,.45);}
+  #player.show{display:block;}
+  #pVid{width:100%;max-width:420px;margin:0 auto;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#000;}
+  #pVid iframe{width:100%;height:100%;display:block;}
+  .pRow{display:flex;align-items:center;gap:6px;margin:8px auto 0;max-width:420px;}
+  .pInfo{flex:1;min-width:0;}
+  .pT{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .pA{font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+  .pBtn{flex:0 0 auto;width:38px;height:38px;border:none;border-radius:50%;background:var(--bg2);color:var(--txt);font-size:15px;}
+  .pBtn:active{background:var(--bg3);}
+  .pBtn.main{background:var(--red);color:#fff;}
+  body.hasPlayer #content, body.hasPlayer #plModalList, body.hasPlayer #dtBody{padding-bottom:calc(var(--pH,300px) + 16px);}
+  .playAll{display:block;width:calc(100% - 28px);margin:2px 14px 10px;border:none;background:var(--red);color:#fff;
+    font-weight:700;font-size:14px;padding:11px 0;border-radius:12px;}
+  .playAll:active{background:var(--reddim);}
 </style>
 </head>
 <body>
@@ -247,7 +264,7 @@
     <div id="plModalHead">
       <button class="pmBack" id="plModalClose">‹</button>
       <span class="pmTitle" id="pmTitle">재생목록</span>
-      <button class="pmOpen" id="pmOpen">📃 재생목록</button>
+      <button class="pmOpen" id="pmPlayAll" style="margin-right:6px;">▶︎ 연속재생</button><button class="pmOpen" id="pmOpen">📃 재생목록</button>
     </div>
     <div id="plSortBar" class="sortBar" style="display:none;"></div>
     <div id="plModalList"></div>
@@ -291,6 +308,16 @@
     </div>
   </div>
   <div id="toast"></div>
+<div id="player">
+  <div id="pVid"><div id="ytFrame"></div></div>
+  <div class="pRow">
+    <div class="pInfo"><div class="pT" id="pT"></div><div class="pA" id="pA"></div></div>
+    <button class="pBtn" id="pPrev" title="이전 곡">⏮︎</button>
+    <button class="pBtn main" id="pPlay" title="재생/일시정지">⏸︎</button>
+    <button class="pBtn" id="pNext" title="다음 곡">⏭︎</button>
+    <button class="pBtn" id="pClose" title="닫기">✕</button>
+  </div>
+</div>
 <script>
 const $=id=>document.getElementById(id);
 const Store=(()=>{
@@ -706,6 +733,7 @@ const CHART_PL={
   KR:'PL4fGSI1pDJn6jXS_Tv_N9B8Z0HTRVJE0m',
   GL:'PL4fGSI1pDJn6O1LS0XSdF3RyO0Rq_LDeI'
 };
+let chartSongs=[]; // 지금 순위 화면의 곡들 (연속재생용)
 async function loadChart(){
   const body=$('chartBody'); if(!body)return;
   const plid=CHART_PL[getRegion()]||CHART_PL.KR;
@@ -729,7 +757,8 @@ async function loadChart(){
       };
     }).filter(Boolean);
     if(items.length===0){ body.innerHTML='<div class="secError">인기 음악을 찾지 못했어요.</div>'; return; }
-    let html='';
+    chartSongs=items;
+    let html='<button class="playAll" id="chartPlayAll">▶︎ 1위부터 연속재생</button>';
     items.forEach((it,i)=>{
       if(i===0){
         html+='<div class="chartTop" data-vid="'+it.vid+'" data-title="'+esc(it.title)+'" data-artist="'+esc(it.artist)+'" data-thumb="'+it.thumb+'"><img class="ctImg" src="'+it.big+'" loading="lazy"><div class="ctInfo" style="display:flex;align-items:center;gap:10px;"><div style="flex:1;min-width:0;"><span class="ctRank">1위</span><div class="ctTitle">'+esc(it.title)+'</div><div class="ctArtist">'+esc(it.artist)+'</div></div>'+btnPairHtml()+'</div></div>';
@@ -969,6 +998,7 @@ async function renderPlaylistGrid(pls, label){
   }catch(err){ c.innerHTML=errorHtml(err); }
 }
 let curSongs=[]; // 현재 모달에 열린 곡들 (원래순)
+let curShown=[]; // 정렬해서 화면에 보이는 순서 (연속재생은 이 순서로)
 /* 정렬: 같은 버튼을 또 누르면 방향이 뒤집힘 (▼/▲) */
 function getSongSort(){
   let v=Store.get('songSort',{mode:'added',desc:false});
@@ -989,6 +1019,7 @@ function renderSongList(){
   else if(st.mode==='played') arr.sort((a,b)=>lastPlayedAt(b.vid)-lastPlayedAt(a.vid)); // 최근 들은 곡부터
   else arr.sort((a,b)=>b.pos-a.pos);                                                     // 최근 추가 곡부터
   if(st.desc) arr.reverse();
+  curShown=arr;
   let html='';
   arr.forEach((s,i)=>{
     // rowHtml에 data-pos(원래 재생목록 위치) 주입
@@ -1056,6 +1087,7 @@ async function openDetail(vid,title,artist,thumb,plid,genre){
   const head='<img class="dtImg" src="https://i.ytimg.com/vi/'+vid+'/hqdefault.jpg" onerror="this.style.display=\'none\'">'
     +'<div class="dtWrap"><div class="dtTitle">'+esc(title)+'</div><div class="dtArtist">'+esc(artist)+'</div>'
     +'<div class="dtActs"><button class="dtBtn yt" id="dtYT">▶\uFE0E 유튜브</button><button class="dtBtn ym" id="dtYM">♫ 유튜브 뮤직</button></div>'
+    +'<button class="playAll" id="dtApp" style="width:100%;margin:10px 0 0;">▶\uFE0E 앱에서 여기부터 연속재생</button>'
     +'<div id="dtExtra"><div class="dtDescT">정보 불러오는 중…</div></div></div>';
   $('dtBody').innerHTML=head;
   $('dtBody').scrollTop=0;
@@ -1082,6 +1114,14 @@ $('dtBody').addEventListener('click',e=>{
   if(!dtCur) return;
   if(e.target.closest('#dtYT')){ recordPlay(dtCur.vid,dtCur.title,dtCur.artist,dtCur.thumb,dtCur.genre); goYT(dtCur.vid,dtCur.plid); }
   else if(e.target.closest('#dtYM')){ recordPlay(dtCur.vid,dtCur.title,dtCur.artist,dtCur.thumb,dtCur.genre); goYM(dtCur.vid); }
+  else if(e.target.closest('#dtApp')){
+    // 지금 보던 목록(재생목록 화면 → 순위 화면) 안에서 이 곡부터 이어서, 목록이 없으면 이 곡만
+    let list=[dtCur];
+    if($('plModal').classList.contains('show') && curShown.some(s=>s.vid===dtCur.vid)) list=curShown.map(s=>({...s,genre:curPlGenre}));
+    else if(currentTab==='chart' && chartSongs.some(s=>s.vid===dtCur.vid)) list=chartSongs;
+    $('dtSheet').classList.remove('show');
+    playQueue(list, Math.max(0,list.findIndex(s=>s.vid===dtCur.vid)));
+  }
 });
 
 document.addEventListener('click',e=>{
@@ -1296,6 +1336,78 @@ function cleanTitle(t){
 }
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 let toastT;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('show');},1500);}
+/* ===== 앱 안 연속 재생 (YouTube 플레이어) ===== */
+let Q=[], QI=0, ytP=null, ytReady=null, errRun=0, recordedIdx=-1;
+function loadYT(){
+  if(ytReady) return ytReady;
+  ytReady=new Promise(res=>{
+    window.onYouTubeIframeAPIReady=()=>res();
+    const sc=document.createElement('script'); sc.src='https://www.youtube.com/iframe_api'; document.head.appendChild(sc);
+  });
+  return ytReady;
+}
+function showPlayer(){
+  $('player').classList.add('show'); document.body.classList.add('hasPlayer');
+  requestAnimationFrame(()=>document.body.style.setProperty('--pH',$('player').offsetHeight+'px'));
+}
+function setPlayBtn(playing){ $('pPlay').textContent=playing?'⏸︎':'▶︎'; }
+function updInfo(){
+  const s=Q[QI]; if(!s) return;
+  $('pT').textContent=s.title||''; $('pA').textContent=(s.artist||'')+'  ·  '+(QI+1)+'/'+Q.length;
+  if('mediaSession' in navigator){
+    try{ navigator.mediaSession.metadata=new MediaMetadata({title:s.title||'',artist:s.artist||'',artwork:s.thumb?[{src:s.thumb}]:[]}); }catch(e){}
+  }
+}
+async function playQueue(list,start){
+  if(!list||!list.length) return;
+  Q=list.map(s=>({vid:s.vid,title:s.title,artist:s.artist,thumb:s.thumb,genre:s.genre||''}));
+  QI=Math.min(Math.max(start||0,0),Q.length-1); errRun=0; recordedIdx=-1;
+  showPlayer(); updInfo();
+  await loadYT();
+  if(!ytP){
+    ytP=new YT.Player('ytFrame',{ videoId:Q[QI].vid,
+      playerVars:{autoplay:1,playsinline:1,rel:0,modestbranding:1},
+      events:{ onReady:e=>e.target.playVideo(), onStateChange:onYTState, onError:onYTErr } });
+  } else { ytP.loadVideoById(Q[QI].vid); }
+}
+function goQ(i){
+  if(!ytP||!Q.length) return;
+  if(i>=Q.length){ toast('끝까지 다 들었어요'); setPlayBtn(false); return; }
+  if(i<0) i=0;
+  QI=i; recordedIdx=-1; ytP.loadVideoById(Q[QI].vid); updInfo();
+}
+function onYTState(e){
+  if(e.data===YT.PlayerState.PLAYING){
+    setPlayBtn(true); errRun=0;
+    if(recordedIdx!==QI){ recordedIdx=QI; const s=Q[QI]; recordPlay(s.vid,s.title,s.artist,s.thumb,s.genre); }
+  } else if(e.data===YT.PlayerState.PAUSED){ setPlayBtn(false); }
+  else if(e.data===YT.PlayerState.ENDED){ goQ(QI+1); }
+}
+function onYTErr(){
+  // 다른 사이트 재생을 막아 둔 영상 등 → 다음 곡으로
+  errRun++;
+  if(errRun>5){ toast('재생이 안 되는 곡이 많아서 멈췄어요'); setPlayBtn(false); return; }
+  toast('앱에서 재생할 수 없는 곡이라 넘어가요');
+  setTimeout(()=>goQ(QI+1),900);
+}
+$('pPlay').addEventListener('click',()=>{ if(!ytP) return; ytP.getPlayerState()===YT.PlayerState.PLAYING?ytP.pauseVideo():ytP.playVideo(); });
+$('pNext').addEventListener('click',()=>goQ(QI+1));
+$('pPrev').addEventListener('click',()=>goQ(QI-1));
+$('pClose').addEventListener('click',()=>{
+  if(ytP) ytP.stopVideo();
+  Q=[]; $('player').classList.remove('show'); document.body.classList.remove('hasPlayer');
+});
+if('mediaSession' in navigator){
+  try{
+    navigator.mediaSession.setActionHandler('nexttrack',()=>goQ(QI+1));
+    navigator.mediaSession.setActionHandler('previoustrack',()=>goQ(QI-1));
+  }catch(e){}
+}
+document.addEventListener('click',e=>{
+  if(e.target.closest('#chartPlayAll')) playQueue(chartSongs,0);
+  else if(e.target.closest('#pmPlayAll')) playQueue(curShown.map(s=>({...s,genre:curPlGenre})),0);
+});
+loadYT(); // 미리 불러 두면 처음 누를 때 바로 재생됨
 pruneHistory();
 renderTab();
 </script>
