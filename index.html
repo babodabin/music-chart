@@ -264,7 +264,7 @@
     <div id="plModalHead">
       <button class="pmBack" id="plModalClose">‹</button>
       <span class="pmTitle" id="pmTitle">재생목록</span>
-      <button class="pmOpen" id="pmPlayAll" style="margin-right:6px;">▶︎ 연속재생</button><button class="pmOpen" id="pmOpen">📃 재생목록</button>
+      <button class="pmOpen" id="pmPlayAll" style="margin-right:6px;">▶︎ 연속재생</button><button class="pmOpen" id="pmOpen">♫ 뮤직에서 듣기</button>
     </div>
     <div id="plSortBar" class="sortBar" style="display:none;"></div>
     <div id="plModalList"></div>
@@ -758,7 +758,7 @@ async function loadChart(){
     }).filter(Boolean);
     if(items.length===0){ body.innerHTML='<div class="secError">인기 음악을 찾지 못했어요.</div>'; return; }
     chartSongs=items;
-    let html='<button class="playAll" id="chartPlayAll">▶︎ 1위부터 연속재생</button>';
+    let html='<div style="display:flex;gap:8px;margin:2px 14px 10px;"><button class="playAll" id="chartPlayAll" style="margin:0;flex:1;">▶︎ 앱에서 연속재생</button><button class="playAll" id="chartYM" style="margin:0;flex:1;background:rgba(255,255,255,.12);">♫ 뮤직에서 1위부터</button></div>';
     items.forEach((it,i)=>{
       if(i===0){
         html+='<div class="chartTop" data-vid="'+it.vid+'" data-title="'+esc(it.title)+'" data-artist="'+esc(it.artist)+'" data-thumb="'+it.thumb+'"><img class="ctImg" src="'+it.big+'" loading="lazy"><div class="ctInfo" style="display:flex;align-items:center;gap:10px;"><div style="flex:1;min-width:0;"><span class="ctRank">1위</span><div class="ctTitle">'+esc(it.title)+'</div><div class="ctArtist">'+esc(it.artist)+'</div></div>'+btnPairHtml()+'</div></div>';
@@ -1061,11 +1061,12 @@ async function openPlaylist(plid, title){
     renderSongList();
   }catch(err){ $('plModalList').innerHTML=errorHtml(err); }
 }
-function openPlaylistInMusic(plid){ window.location.href='https://www.youtube.com/playlist?list='+plid; }
+function openPlaylistInMusic(plid){ window.location.href='https://music.youtube.com/playlist?list='+plid; }
 
 /* ===== 곡 상세 시트 ===== */
 function goYT(vid,plid){ let u='https://www.youtube.com/watch?v='+vid; if(plid)u+='&list='+plid; window.location.href=u; }
-function goYM(vid){ window.location.href='https://music.youtube.com/watch?v='+vid; }
+// 유튜브 뮤직: 재생목록째 넘겨서 앱에서 이어서 나오게 (Premium이면 화면 꺼도 계속)
+function goYM(vid,plid){ let u='https://music.youtube.com/watch?v='+vid; if(plid)u+='&list='+plid; window.location.href=u; }
 function ctxPlid(el){
   if(el && el.closest('#plModalList')) return $('pmOpen').dataset.plid||'';
   if(currentTab==='chart') return CHART_PL[getRegion()]||'';
@@ -1113,7 +1114,7 @@ $('dtClose').addEventListener('click',()=>$('dtSheet').classList.remove('show'))
 $('dtBody').addEventListener('click',e=>{
   if(!dtCur) return;
   if(e.target.closest('#dtYT')){ recordPlay(dtCur.vid,dtCur.title,dtCur.artist,dtCur.thumb,dtCur.genre); goYT(dtCur.vid,dtCur.plid); }
-  else if(e.target.closest('#dtYM')){ recordPlay(dtCur.vid,dtCur.title,dtCur.artist,dtCur.thumb,dtCur.genre); goYM(dtCur.vid); }
+  else if(e.target.closest('#dtYM')){ recordPlay(dtCur.vid,dtCur.title,dtCur.artist,dtCur.thumb,dtCur.genre); goYM(dtCur.vid,dtCur.plid); }
   else if(e.target.closest('#dtApp')){
     // 지금 보던 목록(재생목록 화면 → 순위 화면) 안에서 이 곡부터 이어서, 목록이 없으면 이 곡만
     let list=[dtCur];
@@ -1133,7 +1134,7 @@ document.addEventListener('click',e=>{
   // ▶ 빨강 = 유튜브 (재생목록 이어재생)
   if(e.target.closest('.bYT')){ recordPlay(vid,title,artist,thumb,ctxGenre(row)); goYT(vid, ctxPlid(row)); return; }
   // 🎵 흰색 = 유튜브 뮤직 (한 곡)
-  if(e.target.closest('.bYM')){ recordPlay(vid,title,artist,thumb,ctxGenre(row)); goYM(vid); return; }
+  if(e.target.closest('.bYM')){ recordPlay(vid,title,artist,thumb,ctxGenre(row)); goYM(vid, ctxPlid(row)); return; }
   // 그 외 줄 탭 = 곡 상세 (앱 안에서 보기)
   openDetail(vid,title,artist,thumb, ctxPlid(row), ctxGenre(row));
 });
@@ -1405,6 +1406,7 @@ if('mediaSession' in navigator){
 }
 document.addEventListener('click',e=>{
   if(e.target.closest('#chartPlayAll')) playQueue(chartSongs,0);
+  else if(e.target.closest('#chartYM') && chartSongs[0]) goYM(chartSongs[0].vid, CHART_PL[getRegion()]||CHART_PL.KR);
   else if(e.target.closest('#pmPlayAll')) playQueue(curShown.map(s=>({...s,genre:curPlGenre})),0);
 });
 loadYT(); // 미리 불러 두면 처음 누를 때 바로 재생됨
