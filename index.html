@@ -52,6 +52,8 @@
   .tabRow{flex:0 0 auto;display:flex;gap:8px;padding:6px 14px 10px;background:transparent;}
   .tabRow.four{gap:6px;}
   .tabRow.four .tab{font-size:13px;padding:11px 0;border-radius:12px;}
+  .tabRow.six{gap:5px;}
+  .tabRow.six .tab{font-size:12px;padding:11px 0;border-radius:11px;min-width:0;}
   .tab{flex:1 1 0;background:var(--bg2);border:none;border-radius:14px;color:var(--dim);
     font-size:15px;font-weight:700;padding:12px 0;white-space:nowrap;transition:background .15s;}
   /* 채널 */
@@ -221,16 +223,24 @@
   <div id="menuDrop">
     <button class="mItem" data-tab="front"><span class="mi">🏆</span>순위<span class="mc">›</span></button>
     <button class="mItem" data-tab="songs"><span class="mi">🎵</span>내 노래<span class="mc">›</span></button>
+    <button class="mItem" data-tab="col"><span class="mi">📂</span>모음<span class="mc">›</span></button>
   </div>
   <div id="tabs" class="tabRow">
     <button class="tab active" data-tab="chart">🏆 순위</button>
     <button class="tab" data-tab="mychart">🎧 내 순위</button>
   </div>
-  <div id="tabs2" class="tabRow four">
-    <button class="tab" data-tab="my">🎤 팝</button>
-    <button class="tab" data-tab="period">🎸 인디</button>
+  <div id="tabs2" class="tabRow six">
+    <button class="tab" data-tab="pop">🎤 팝</button>
+    <button class="tab" data-tab="hiphop">🧢 힙합</button>
+    <button class="tab" data-tab="rock">🎸 락</button>
+    <button class="tab" data-tab="mood">🌙 무드</button>
+    <button class="tab" data-tab="edm">💿 EDM</button>
+    <button class="tab" data-tab="other">🎹 기타</button>
+  </div>
+  <div id="tabs3" class="tabRow four">
     <button class="tab" data-tab="official">🎵 재생목록</button>
     <button class="tab" data-tab="channel">📺 채널</button>
+    <button class="tab" data-tab="etc">📁 Etc</button>
   </div>
   <div id="content"></div>
   <div id="plModal">
@@ -263,15 +273,7 @@
       <input class="setInput" id="apiKeyInput" type="text" placeholder="여기에 API 키 붙여넣기" autocomplete="off" autocorrect="off" autocapitalize="off">
       <div class="setHelp">구글 클라우드에서 발급받은 키예요. 한 번 넣으면 이 폰에 저장됩니다.</div>
       <button class="setBtn" id="saveKeyBtn">키 저장</button>
-      <div class="setLabel">🎤 팝 재생목록</div>
-      <div class="plAddRow"><input class="setInput" id="myPlInput" type="text" placeholder="재생목록 링크 붙여넣기" autocomplete="off"><button id="myPlAdd">추가</button></div>
-      <div id="myPlList"></div>
-      <div class="setLabel">🎸 인디 재생목록</div>
-      <div class="plAddRow"><input class="setInput" id="perPlInput" type="text" placeholder="재생목록 링크 붙여넣기" autocomplete="off"><button id="perPlAdd">추가</button></div>
-      <div id="perPlList"></div>
-      <div class="setLabel">🎵 재생목록 (가져온 재생목록)</div>
-      <div class="plAddRow"><input class="setInput" id="offPlInput" type="text" placeholder="재생목록 링크 붙여넣기" autocomplete="off"><button id="offPlAdd">추가</button></div>
-      <div id="offPlList"></div>
+      <div id="plSets"></div>
       <div class="setLabel">📺 채널</div>
       <div class="plAddRow"><input class="setInput" id="chInput" type="text" placeholder="채널 링크 또는 @이름 붙여넣기" autocomplete="off" autocorrect="off" autocapitalize="off"><button id="chAdd">추가</button></div>
       <div id="chSetList"></div>
@@ -305,8 +307,8 @@ const Store=(()=>{
     }
   };
 })();
-/* 팝: 다빈 YouTube의 [Pop] 재생목록 (댄스·발라드·레트로·모던록·락·힙합 × 연도) */
-const DEFAULT_MY=[
+/* 내 노래: 다빈 YouTube의 [Pop]·[Hiphop]·[Rock]·[Mood]·[EDM]·[Instrumental]+[CCM] 재생목록 / 모음: [Etc.] */
+const DEF_POP=[
   {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSInmHSmfojyFQ8uL9qx7G5lY'},
   {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSInaPBxrMrIM18tKsTDCnytg'},
   {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSIlGexJ9qly5_Svu67fQWZP4'},
@@ -315,30 +317,63 @@ const DEFAULT_MY=[
   {url:'https://www.youtube.com/playlist?list=PLRkydgHcL1OI'},
   {url:'https://www.youtube.com/playlist?list=PLLRVV-I0YBZI'},
   {url:'https://www.youtube.com/playlist?list=PLZFWzfvRGeWE'},
-  {url:'https://www.youtube.com/playlist?list=PLSfekc4ORPGY'},
-  {url:'https://www.youtube.com/playlist?list=PLSpL8sYSj1Rs'},
-  {url:'https://www.youtube.com/playlist?list=PLApg1Jr3WNVo'},
-  {url:'https://www.youtube.com/playlist?list=PLZPBqe2U_rHA'},
-  {url:'https://www.youtube.com/playlist?list=PLPwsJLmHXRIg'},
-  {url:'https://www.youtube.com/playlist?list=PLODZboKjqq9c'},
-  {url:'https://www.youtube.com/playlist?list=PLSqAGlXFD4GQ'},
-  {url:'https://www.youtube.com/playlist?list=PLcdirR8RqT18'},
-  {url:'https://www.youtube.com/playlist?list=PLLRU5j74jS3k'},
-  {url:'https://www.youtube.com/playlist?list=PLNySpj3CRSjI'},
-  {url:'https://www.youtube.com/playlist?list=PLJmaL6upZw1I'},
-  {url:'https://www.youtube.com/playlist?list=PLJhtmwsL4Hvg'},
-  {url:'https://www.youtube.com/playlist?list=PLb_WcspJkENk'},
-  {url:'https://www.youtube.com/playlist?list=PLPyqKqLadqeo'},
-  {url:'https://www.youtube.com/playlist?list=PLQL-NQNPj8XU'},
-  {url:'https://www.youtube.com/playlist?list=PLDfcRVj6TvNU'},
-  {url:'https://www.youtube.com/playlist?list=PLYhDGEqLnHy8'},
-  {url:'https://www.youtube.com/playlist?list=PLTCRH59Ez4e4'},
-  {url:'https://www.youtube.com/playlist?list=PLFCJjGG08dZY'},
-  {url:'https://www.youtube.com/playlist?list=PLd9kV9Cf2k0Y'},
-  {url:'https://www.youtube.com/playlist?list=PLP8VpqcGzqes'},
-  {url:'https://www.youtube.com/playlist?list=PLeww8r10bzAY'},
-  {url:'https://www.youtube.com/playlist?list=PLUzbfztRc4ps'},
-  {url:'https://www.youtube.com/playlist?list=PLTi-ewA84xMs'},
+  {url:'https://www.youtube.com/playlist?list=PLA9XNE7LrA_8'},
+];
+const DEF_HIPHOP=[
+  {url:'https://www.youtube.com/playlist?list=PLYKBrfZchRSw'},
+  {url:'https://www.youtube.com/playlist?list=PLOkWLOZDRCbA'},
+  {url:'https://www.youtube.com/playlist?list=PLd0gio1N0ie0'},
+  {url:'https://www.youtube.com/playlist?list=PLAtvAT8tpy1w'},
+];
+const DEF_ROCK=[
+  {url:'https://www.youtube.com/playlist?list=PLViqnWreVDtc'},
+  {url:'https://www.youtube.com/playlist?list=PLOEH5IXnmnws'},
+  {url:'https://www.youtube.com/playlist?list=PLcWcsIXw9tjM'},
+];
+const DEF_MOOD=[
+  {url:'https://www.youtube.com/playlist?list=PLdetkpzlvy8A'},
+  {url:'https://www.youtube.com/playlist?list=PLeCBtmOevWAU'},
+  {url:'https://www.youtube.com/playlist?list=PLe4YVWCVhjV4'},
+  {url:'https://www.youtube.com/playlist?list=PLcXZQss-YhZc'},
+  {url:'https://www.youtube.com/playlist?list=PLNs63i7rwrMU'},
+  {url:'https://www.youtube.com/playlist?list=PLRjUM2SEqQL8'},
+];
+const DEF_EDM=[
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSIn4GmCvS0RBPk4ZxbImdq48'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSImKUOG_eegAQ3iqkJv0ZRB0'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSIl9PRkRCv6_sdLFswJ1af5t'},
+];
+const DEF_OTHER=[
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSIm3YB5WLk-jQgGrHUL-NTDI'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSInL3_yMFyq_v3qcnZpI7AZZ'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSIm-PllBbbfnF6ZDPju5LdEc'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSIkjh_x_fEUT_hS4F9Nd5b0u'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSIlYYj6A18QDCEOV4QsrrQ-5'},
+  {url:'https://www.youtube.com/playlist?list=PLR3oX9-OHjF8'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSIk-TueLPufIHyKVZ6xZ7rwb'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSImXtr-r1rd0V_b-VlVmc_rv'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSImGlQE8bT9IypFKn2YfIdHU'},
+];
+const DEF_ETC=[
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSIlXjwrEc19jp3d-NVzlIiJK'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSImGNl3XPX3VfAACYSuw5RGo'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSIltG2paXEy7y-ONpbftLy6h'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSIlqRqTHN3AD9uCliFUrH3Mu'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSIkDAnP9VtSxmi76yHTzecJn'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSIlP-gI0yLb-WDBtZHSYXGas'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSIkQUaYHzeTymnfhWi9909DG'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSIn0teoSE8zz3KS_k2RW2rh1'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSIkBa-SMumLPvNDA3L0wAs6P'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSInW6BWyvJeVNiZLtP2_0sIa'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSIm-aBgJmsGm0vP_d6r-q4J6'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSImLYPBs_DqIeNWoChR0vOkq'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSImpNWyHB7Xks1B5DqYI3Hjp'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSIns7w1Rv__Ya8_A8hQiBaqA'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSImfyazoqeuGoiDZvgDdWNbg'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSIl0fcongjVvUF__6FnO08me'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSInEYVOTrwa0zQukIbXke7-Z'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSIkW8PMpphwIfhOoRchAExXd'},
+  {url:'https://www.youtube.com/playlist?list=PLzEyMy1AnSImulLM6XaXuByGdbUBnWSpm'},
 ];
 const DEFAULT_OFFICIAL=[
   {url:'https://youtube.com/playlist?list=RDCLAK5uy_l7wbVbkC-dG5fyEQQsBfjm_z3dLAhYyvo'},
@@ -358,27 +393,19 @@ const DEFAULT_OFFICIAL=[
   {url:'https://youtube.com/playlist?list=RDCLAK5uy_lBNUteBRencHzKelu5iDHwLF6mYqjL-JU'},
   {url:'https://youtube.com/playlist?list=RDCLAK5uy_mjCKq8hnUQJqul0W6YW6x2Ep4P67jQ5Po'},
 ];
-/* 인디: 다빈 YouTube의 [Indie] 재생목록 (retro·warm·melancholy·인디락·인디힙합 × 연도) */
-const DEFAULT_PERIOD=[
-  {url:'https://www.youtube.com/playlist?list=PLUl2NMKLNbiQ'},
-  {url:'https://www.youtube.com/playlist?list=PLL41Dhqkju7g'},
-  {url:'https://www.youtube.com/playlist?list=PLEJTgkokMc_0'},
-  {url:'https://www.youtube.com/playlist?list=PLZHCxbr7hSyE'},
-  {url:'https://www.youtube.com/playlist?list=PLY7AEu2vn8UA'},
-  {url:'https://www.youtube.com/playlist?list=PLItnKklWOF3s'},
-  {url:'https://www.youtube.com/playlist?list=PLd-uHe-VZ56A'},
-  {url:'https://www.youtube.com/playlist?list=PLb8Y8UncAZEo'},
-  {url:'https://www.youtube.com/playlist?list=PLLTg5J6n-tCw'},
-  {url:'https://www.youtube.com/playlist?list=PLB_zRmwxTSBE'},
-  {url:'https://www.youtube.com/playlist?list=PLM_VUt2jD5F4'},
-  {url:'https://www.youtube.com/playlist?list=PLRsTWhLU8O2A'},
-  {url:'https://www.youtube.com/playlist?list=PLQvmklflQC4Q'},
-  {url:'https://www.youtube.com/playlist?list=PLCPQsw2iMTdk'},
-  {url:'https://www.youtube.com/playlist?list=PLFzcKqsfNWiw'},
-  {url:'https://www.youtube.com/playlist?list=PLI8k840fgZYw'},
-  {url:'https://www.youtube.com/playlist?list=PLDMpYUXnbqdg'},
-  {url:'https://www.youtube.com/playlist?list=PLP35sfl4IOt0'},
+/* 탭별 재생목록: tab=탭 이름, key=폰에 저장하는 이름, name=화면에 보이는 이름 */
+const PL_GROUPS=[
+  {tab:'pop',   key:'popPls',   name:'팝',   icon:'🎤', def:DEF_POP},
+  {tab:'hiphop',key:'hipPls',   name:'힙합', icon:'🧢', def:DEF_HIPHOP},
+  {tab:'rock',  key:'rockPls',  name:'락',   icon:'🎸', def:DEF_ROCK},
+  {tab:'mood',  key:'moodPls',  name:'무드', icon:'🌙', def:DEF_MOOD},
+  {tab:'edm',   key:'edmPls',   name:'EDM',  icon:'💿', def:DEF_EDM},
+  {tab:'other', key:'otherPls', name:'기타 (Instrumental·CCM)', icon:'🎹', def:DEF_OTHER},
+  {tab:'official',key:'offPls', name:'재생목록 (가져온 재생목록)', icon:'🎵', def:DEFAULT_OFFICIAL},
+  {tab:'etc',   key:'etcPls',   name:'Etc',  icon:'📁', def:DEF_ETC},
 ];
+const groupOf=tab=>PL_GROUPS.find(g=>g.tab===tab);
+function getPls(g){ return Store.get(g.key, g.def); }
 /* 채널: name=표시 이름, url=채널 주소, team=같은 팀 묶음 이름(있으면 한 칸에 묶어 표시) */
 const DEFAULT_CHANNELS=[
   {name:'나비워십', url:'https://www.youtube.com/@naviworship'},
@@ -431,34 +458,7 @@ const OFF_ADD_VER=3;
   }
   Store.set('offAddVer',OFF_ADD_VER);
 })();
-/* 재생목록(가져온 것)에 직접 넣어 둔 재생목록(기본값에 없는 것)을 내 생각으로 한 번만 옮김 */
-(function moveMineToThink(){
-  if(Store.get('mineMoved',false)) return;
-  const saved=Store.get('offPls',null);
-  if(saved){
-    const def=new Set(DEFAULT_OFFICIAL.map(p=>extractPlaylistId(p.url)));
-    const mine=saved.filter(p=>!def.has(extractPlaylistId(p.url)));
-    if(mine.length){
-      const per=Store.get('perPls',DEFAULT_PERIOD).slice();
-      const have=new Set(per.map(p=>extractPlaylistId(p.url)));
-      mine.forEach(p=>{ if(!have.has(extractPlaylistId(p.url))) per.push(p); });
-      Store.set('perPls',per);
-      Store.set('offPls',saved.filter(p=>def.has(extractPlaylistId(p.url))));
-    }
-  }
-  Store.set('mineMoved',true);
-})();
-/* 내 음악→팝, 내 생각→인디로 바꾸면서, 폰에 저장된 두 목록을 새 기본 목록으로 한 번만 교체 */
-(function popIndieSwap(){
-  if(Store.get('popIndieVer',0)>=1) return;
-  if(Store.get('myPls',null)) Store.set('myPls',DEFAULT_MY);
-  if(Store.get('perPls',null)) Store.set('perPls',DEFAULT_PERIOD);
-  Store.set('popIndieVer',1);
-})();
 function getApiKey(){ return Store.get('apiKey',''); }
-function getMyPls(){ return Store.get('myPls', DEFAULT_MY); }
-function getOffPls(){ return Store.get('offPls', DEFAULT_OFFICIAL); }
-function getPerPls(){ return Store.get('perPls', DEFAULT_PERIOD); }
 function getRegion(){ let r=Store.get('region','KR'); if(r==='US') r='GL'; return r; }
 function getMyPeriod(){ const p=Store.get('myPeriod','year'); return p==='all'?'year':p; }
 /* ===== 장르: 재생목록 이름 뒤 숫자를 뺀 것 (예: '댄스 1990' -> 댄스) ===== */
@@ -552,13 +552,16 @@ async function ytFetch(endpoint, params){
   if(data.error){ throw {api:data.error}; }
   return data;
 }
-/* 화면 묶음: 앞(순위·내 순위) / 메뉴(팝·인디·재생목록·채널) */
-const MENU_TABS=['my','period','official','channel'];
+/* 화면 묶음: 순위(순위·내 순위) / 내 노래(팝·힙합·락·무드·EDM·기타) / 모음(재생목록·채널·Etc) */
+const SONG_TABS=['pop','hiphop','rock','mood','edm','other'];
+const COL_TABS=['official','channel','etc'];
 function goTab(tab){
   if(tab==='front') tab=Store.get('lastFront','chart'); // 순위 쪽: 마지막에 보던 탭으로
-  if(tab==='songs') tab=Store.get('lastSong','my');     // 내 노래 쪽: 마지막에 보던 탭으로
+  if(tab==='songs'){ tab=Store.get('lastSong','pop'); if(!SONG_TABS.includes(tab)) tab='pop'; } // 내 노래: 마지막에 보던 탭
+  if(tab==='col'){ tab=Store.get('lastCol','official'); if(!COL_TABS.includes(tab)) tab='official'; } // 모음: 마지막에 보던 탭
   if(tab==='chart'||tab==='mychart') Store.set('lastFront',tab);
-  if(MENU_TABS.includes(tab)) Store.set('lastSong',tab);
+  if(SONG_TABS.includes(tab)) Store.set('lastSong',tab);
+  if(COL_TABS.includes(tab)) Store.set('lastCol',tab);
   currentTab=tab;
   closeMenu();
   renderTab();
@@ -570,10 +573,11 @@ function closeMenu(){ $('menuDrop').classList.remove('open'); $('titleBtn').clas
 $('titleBtn').addEventListener('click',()=>{ $('menuDrop').classList.contains('open')?closeMenu():openMenu(); });
 function syncNav(){
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===currentTab));
-  const inMenu=MENU_TABS.includes(currentTab);
-  document.querySelectorAll('.mItem').forEach(x=>x.classList.toggle('on',x.dataset.tab===(inMenu?'songs':'front')));
-  $('tabs').style.display=inMenu?'none':'';   // 순위 쪽 탭
-  $('tabs2').style.display=inMenu?'':'none';  // 내 노래 쪽 탭
+  const side=SONG_TABS.includes(currentTab)?'songs':COL_TABS.includes(currentTab)?'col':'front';
+  document.querySelectorAll('.mItem').forEach(x=>x.classList.toggle('on',x.dataset.tab===side));
+  $('tabs').style.display=side==='front'?'':'none';   // 순위 쪽 탭
+  $('tabs2').style.display=side==='songs'?'':'none';  // 내 노래 쪽 탭
+  $('tabs3').style.display=side==='col'?'':'none';    // 모음 쪽 탭
 }
 function renderTab(){
   const c=$('content');
@@ -586,9 +590,7 @@ function renderTab(){
     return;
   }
   if(currentTab==='chart'){ renderChart(); }
-  else if(currentTab==='my'){ renderPlaylistGrid(getMyPls(),'팝'); }
-  else if(currentTab==='official'){ renderPlaylistGrid(getOffPls(),'재생목록'); }
-  else if(currentTab==='period'){ renderPlaylistGrid(getPerPls(),'인디'); }
+  else if(groupOf(currentTab)){ const g=groupOf(currentTab); renderPlaylistGrid(getPls(g),g.name.replace(/ \(.*\)$/,'')); }
 }
 
 /* ===== 채널 ===== */
@@ -944,11 +946,11 @@ async function renderPlaylistGrid(pls, label){
     const drop=items.filter(it=>/^Uploads from NaviWorship/i.test((it.snippet&&it.snippet.title)||'')).map(it=>it.id);
     if(drop.length){
       items=items.filter(it=>!drop.includes(it.id));
-      ['myPls','offPls','perPls'].forEach(k=>{ const cur=Store.get(k,null); if(cur){ const nx=cur.filter(p=>!drop.includes(extractPlaylistId(p.url))); if(nx.length!==cur.length) Store.set(k,nx); } });
+      PL_GROUPS.map(g=>g.key).forEach(k=>{ const cur=Store.get(k,null); if(cur){ const nx=cur.filter(p=>!drop.includes(extractPlaylistId(p.url))); if(nx.length!==cur.length) Store.set(k,nx); } });
     }
     if(items.length===0){ c.innerHTML='<div class="secError">재생목록을 찾지 못했어요. (비공개이거나 자동 생성 목록일 수 있어요)</div>'; return; }
     // 한국어 제목이 있으면 그걸로 보여줌 (예: Crypt of Death → 지하를 울리는 데스메탈)
-    items.forEach(it=>{ const lo=it.snippet&&it.snippet.localized; if(lo&&lo.title) it.snippet.title=lo.title; it.snippet.title=it.snippet.title.replace(/^\[(Pop|Indie)\]\s*/i,''); });
+    items.forEach(it=>{ const lo=it.snippet&&it.snippet.localized; if(lo&&lo.title) it.snippet.title=lo.title; it.snippet.title=it.snippet.title.replace(/^\[[^\]]+\]\s*/,''); });
     const sorted=sortGridItems(items, pls, getGridSort());
     let html='<div class="sortBar" id="gridSortBar">'+sortBarHtml(getGridSort())+'</div>';
     html+='<div class="plGrid">';
@@ -1138,7 +1140,7 @@ $('dtSheet').addEventListener('touchend',e=>{
   if(Math.abs(dx)<Math.abs(dy)*1.5) return;
   $('dtSheet').classList.remove('show');
 },{passive:true});
-/* 좌우 스와이프 — 앞 5칸(한국·미국·연간·월간·주간) / 메뉴 4칸(팝·인디·재생목록·채널) 각각 순환 */
+/* 좌우 스와이프 — 순위 5칸(한국·미국·연간·월간·주간) / 내 노래 6칸 / 모음 3칸 각각 순환 */
 const FRONT_STEPS=[['chart','KR'],['chart','GL'],['mychart','year'],['mychart','month'],['mychart','week']];
 function frontIndex(){
   if(currentTab==='chart') return getRegion()==='GL'?1:0;
@@ -1157,9 +1159,10 @@ $('content').addEventListener('touchend',e=>{
   if(Math.abs(dx)<60) return;
   if(Math.abs(dx)<Math.abs(dy)*1.5) return;
   const dir=dx<0?1:-1; // 왼쪽으로 밀면 다음
-  if(MENU_TABS.includes(currentTab)){
-    const idx=(MENU_TABS.indexOf(currentTab)+dir+MENU_TABS.length)%MENU_TABS.length;
-    goTab(MENU_TABS[idx]);
+  const ring=SONG_TABS.includes(currentTab)?SONG_TABS:COL_TABS.includes(currentTab)?COL_TABS:null;
+  if(ring){
+    const idx=(ring.indexOf(currentTab)+dir+ring.length)%ring.length;
+    goTab(ring[idx]);
   } else {
     const idx=(frontIndex()+dir+FRONT_STEPS.length)%FRONT_STEPS.length;
     const [tab,val]=FRONT_STEPS[idx];
@@ -1201,7 +1204,7 @@ $('clearHistBtn').addEventListener('click',()=>{
 $('exportBtn').addEventListener('click',()=>{
   const data={
     v:1,
-    myPls:getMyPls(), offPls:getOffPls(), perPls:getPerPls(),
+    pls:Object.fromEntries(PL_GROUPS.map(g=>[g.key,getPls(g)])),
     channels:getChannels(),
     playHistory:getHistory(), plUsed:Store.get('plUsed',{}),
     apiKey:getApiKey()
@@ -1222,11 +1225,10 @@ $('importBtn').addEventListener('click',()=>{
   if(!raw){ toast('복원할 내용을 붙여넣어주세요'); return; }
   let data;
   try{ data=JSON.parse(raw); }catch(e){ toast('백업 내용 형식이 올바르지 않아요'); return; }
-  if(!data || (!data.myPls && !data.offPls && !data.perPls && !data.channels && !data.playHistory)){ toast('백업 내용을 알아볼 수 없어요'); return; }
+  if(!data || (!data.pls && !data.offPls && !data.channels && !data.playHistory)){ toast('백업 내용을 알아볼 수 없어요'); return; }
   if(!confirm('지금 저장된 재생목록·채널·내 순위 기록을 백업 내용으로 덮어쓸까요?')) return;
-  if(Array.isArray(data.myPls)) Store.set('myPls',data.myPls);
-  if(Array.isArray(data.offPls)) Store.set('offPls',data.offPls);
-  if(Array.isArray(data.perPls)) Store.set('perPls',data.perPls);
+  if(data.pls) PL_GROUPS.forEach(g=>{ if(Array.isArray(data.pls[g.key])) Store.set(g.key,data.pls[g.key]); });
+  if(Array.isArray(data.offPls)) Store.set('offPls',data.offPls); // 예전 백업
   if(Array.isArray(data.channels)) Store.set('channels',data.channels);
   if(Array.isArray(data.playHistory)) Store.set('playHistory',data.playHistory);
   if(data.plUsed && typeof data.plUsed==='object') Store.set('plUsed',data.plUsed);
@@ -1234,9 +1236,15 @@ $('importBtn').addEventListener('click',()=>{
   $('apiKeyInput').value=getApiKey();
   renderSavedPls(); toast('복원됐어요 · 적용 누르면 보여요');
 });
-$('myPlAdd').addEventListener('click',()=>addPl('myPls','myPlInput',DEFAULT_MY));
-$('offPlAdd').addEventListener('click',()=>addPl('offPls','offPlInput',DEFAULT_OFFICIAL));
-$('perPlAdd').addEventListener('click',()=>addPl('perPls','perPlInput',DEFAULT_PERIOD));
+/* 설정의 재생목록 칸: 탭마다 하나씩 */
+$('plSets').innerHTML=PL_GROUPS.map(g=>
+  '<div class="setLabel">'+g.icon+' '+esc(g.name)+'</div>'+
+  '<div class="plAddRow"><input class="setInput" id="plIn_'+g.tab+'" type="text" placeholder="재생목록 링크 붙여넣기" autocomplete="off"><button data-add="'+g.tab+'">추가</button></div>'+
+  '<div class="plList" data-list="'+g.tab+'"></div>').join('');
+$('plSets').addEventListener('click',e=>{
+  const a=e.target.closest('[data-add]'); if(a){ const g=groupOf(a.dataset.add); addPl(g.key,'plIn_'+g.tab,g.def); return; }
+  const d=e.target.closest('.spDel'); if(d){ const g=groupOf(d.dataset.kind); delPl(e,g.key,g.def); }
+});
 function addPl(storeKey,inputId,def){
   const url=$(inputId).value.trim();
   const id=extractPlaylistId(url);
@@ -1247,9 +1255,7 @@ function addPl(storeKey,inputId,def){
   $(inputId).value=''; renderSavedPls(); toast('추가됨 · 적용 누르면 보여요');
 }
 function renderSavedPls(){
-  $('myPlList').innerHTML=getMyPls().map((p,i)=>savedRow(p,i,'my')).join('')||'<div class="setHelp">없음</div>';
-  $('offPlList').innerHTML=getOffPls().map((p,i)=>savedRow(p,i,'off')).join('')||'<div class="setHelp">없음</div>';
-  $('perPlList').innerHTML=getPerPls().map((p,i)=>savedRow(p,i,'per')).join('')||'<div class="setHelp">없음</div>';
+  PL_GROUPS.forEach(g=>{ document.querySelector('[data-list="'+g.tab+'"]').innerHTML=getPls(g).map((p,i)=>savedRow(p,i,g.tab)).join('')||'<div class="setHelp">없음</div>'; });
   $('chSetList').innerHTML=getChannels().map((c,i)=>'<div class="savedPl"><span class="spName">'+esc(c.name)+(c.team?' <span style="color:var(--dim2)">· '+esc(c.team)+'</span>':'')+'</span><button class="spDel" data-i="'+i+'">×</button></div>').join('')||'<div class="setHelp">없음</div>';
 }
 /* 채널 추가: 링크/@이름 → 채널 정보 확인 후 저장 (이름 = 채널 이름) */
@@ -1278,9 +1284,6 @@ function savedRow(p,i,kind){
   const id=extractPlaylistId(p.url)||'?';
   return '<div class="savedPl"><span class="spName">'+esc(id)+'</span><button class="spDel" data-kind="'+kind+'" data-i="'+i+'">×</button></div>';
 }
-$('myPlList').addEventListener('click',e=>delPl(e,'myPls',DEFAULT_MY));
-$('offPlList').addEventListener('click',e=>delPl(e,'offPls',DEFAULT_OFFICIAL));
-$('perPlList').addEventListener('click',e=>delPl(e,'perPls',DEFAULT_PERIOD));
 function delPl(e,storeKey,def){
   const btn=e.target.closest('.spDel'); if(!btn)return;
   const i=+btn.dataset.i; const cur=Store.get(storeKey,def).slice();
